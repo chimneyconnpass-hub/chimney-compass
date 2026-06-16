@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CHIMNEY COFFEE | Chimney Compass</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/css/styles.css?v=20260617c">
+    <script src="./assets/js/data.js?v=20260617c" defer></script>
+    <script src="./assets/js/app.js?v=20260617c" defer></script>
+  </head>
+  <body>
+    <div class="site-shell page-shell">
+      <header class="site-header compact">
+        <a class="back-link" href="./index.html">‹ 戻る</a>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="メニュー">
+          <span></span><span></span><span></span>
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="メインメニュー">
+          <a href="./projects.html">Project Map</a>
+          <a href="./schedule.html">Schedule</a>
+          <a href="./calendar.html">Calendar</a>
+        </nav>
+      </header>
+      <main>
+        <section class="page-hero">
+          <span class="hero-icon" aria-hidden="true">☕</span>
+          <h1>CHIMNEY COFFEE</h1>
+          <p>店舗住所一覧</p>
+        </section>
+        <section class="section">
+          <div class="coffee-list" data-coffee-list></div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

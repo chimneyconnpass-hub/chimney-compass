@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Chimney Compass</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/css/styles.css?v=20260617c">
+    <script src="./assets/js/data.js?v=20260617c" defer></script>
+    <script src="./assets/js/app.js?v=20260617c" defer></script>
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <a class="brand" href="./index.html" aria-label="Chimney Compass トップへ">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 56 72" role="img">
+              <path class="chimney-smoke" d="M35 14c-4.7-.2-7.2-3.3-5.9-6.4 1.2-2.8 4.9-3 6.7-.8 1.8-3.6 6.6-3.3 8 .1 1.5 3.6-1.2 6.7-5.7 7.2-.9.1-1.9.1-3.1-.1Z"/>
+              <path class="chimney-smoke smoke-two" d="M44 25c-4.3.7-7.5-1.4-7.2-4.6.3-3.1 4.1-4.5 6.4-2.4 1.7-2.8 5.8-2.2 6.8.9 1.2 3.8-1.3 5.8-6 6.1Z"/>
+              <path class="chimney-star" d="M17 11l1.2 3.1 3.1 1.2-3.1 1.2L17 19.6l-1.2-3.1-3.1-1.2 3.1-1.2L17 11Z"/>
+              <path class="chimney-stack" d="M30 19h10c1.2 0 2.2 1 2.2 2.2v19.5H27.8V21.2c0-1.2 1-2.2 2.2-2.2Z"/>
+              <path class="chimney-lip" d="M27 16h16v5H27z"/>
+              <path class="house-roof" d="M7 43.5 27.5 25 50 43.5H7Z"/>
+              <path class="house-body" d="M12 42h32v21.5c0 1.9-1.6 3.5-3.5 3.5h-25c-1.9 0-3.5-1.6-3.5-3.5V42Z"/>
+              <path class="house-door" d="M24 54c0-2.7 2.2-5 5-5s5 2.3 5 5v13H24V54Z"/>
+              <path class="house-window" d="M16.5 48h6.5v6.5h-6.5zm18.5 0h6.5v6.5H35z"/>
+              <path class="chimney-lines" d="M31 27h8M31 34h8M15 59h27"/>
+            </svg>
+          </span>
+          <span>
+            <span class="brand-title">Chimney Compass</span>
+            <span class="brand-subtitle">えんとつ町のイベントガイド</span>
+          </span>
+        </a>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="メニュー">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="メインメニュー">
+          <a href="./projects.html">Project Map</a>
+          <a href="./schedule.html">Schedule</a>
+          <a href="./calendar.html">Calendar</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="section">
+          <div class="section-heading">
+            <span class="section-icon" aria-hidden="true">📌</span>
+            <h1>Pick Up</h1>
+          </div>
+          <div class="pickup-grid" data-pickups></div>
+        </section>
+
+        <section class="section">
+          <div class="section-heading-row">
+            <div class="section-heading">
+              <span class="section-icon" aria-hidden="true">🗓</span>
+              <h2>Event Calendar</h2>
+            </div>
+            <a class="calendar-index-link" href="./calendar.html">📖 1ヶ月カレンダーを見る</a>
+          </div>
+          <div class="calendar-strip" data-home-calendar></div>
+          <div class="legend" data-calendar-legend></div>
+        </section>
+
+        <section class="section">
+          <div class="section-heading">
+            <span class="section-icon" aria-hidden="true">🌎</span>
+            <h2>Town Map</h2>
+          </div>
+          <div class="town-grid" data-town-map></div>
+        </section>
+
+        <section class="section schedule-band">
+          <div>
+            <div class="section-heading">
+              <span class="section-icon" aria-hidden="true">📋</span>
+              <h2>Schedule</h2>
+            </div>
+            <p>すべてのイベントを一覧で見る</p>
+          </div>
+          <a class="button" href="./schedule.html">スケジュール表を見る</a>
+        </section>
+      </main>
+
+      <footer class="town-footer" aria-hidden="true">
+        <span class="footer-town">
+          <svg viewBox="0 0 420 86" role="img">
+            <path class="town-smoke" d="M86 16c-7-.3-11-4.7-8.7-9.3 1.9-3.9 7.3-4 9.8-.7 2.5-5 9.4-4.5 11.4.3 2 5.1-2 9.3-8.8 9.8-1.1.1-2.3.1-3.7-.1Z"/>
+            <path class="town-smoke smoke-two" d="M101 30c-6.8 1-11.8-2-11.1-6.8.6-4.6 6.2-6.4 9.5-3.4 2.6-4.1 8.6-3.2 10.2 1.4 1.8 5.5-2.1 8.3-8.6 8.8Z"/>
+            <path class="town-house roof" d="M22 49 43 29l23 20H22Z"/>
+            <path class="town-house body" d="M28 47h31v28H28z"/>
+            <path class="town-window" d="M35 55h7v7h-7zm11 0h7v7h-7z"/>
+            <path class="town-door" d="M41 65c0-3 2.3-5.5 5.2-5.5s5.2 2.5 5.2 5.5v10H41V65Z"/>
+            <path class="town-stack" d="M73 26h15v49H73z"/>
+            <path class="town-lip" d="M70 21h21v7H70z"/>
+            <path class="town-building body" d="M112 42h40v33h-40z"/>
+            <path class="town-window" d="M121 50h7v7h-7zm15 0h7v7h-7zm-15 13h7v7h-7zm15 13h7v7h-7z"/>
+            <path class="town-house roof" d="M168 50 187 32l21 18h-40Z"/>
+            <path class="town-house body" d="M173 48h30v27h-30z"/>
+            <path class="town-window" d="M182 56h7v7h-7zm10 0h7v7h-7z"/>
+            <path class="town-tree" d="M226 52c0-8 6-14 13-14s13 6 13 14c0 6-4 11-9 13v10h-8V65c-5-2-9-7-9-13Z"/>
+            <path class="town-house roof" d="M265 49 287 28l24 21h-46Z"/>
+            <path class="town-house body" d="M271 47h33v28h-33z"/>
+            <path class="town-door" d="M283 65c0-3 2.4-5.5 5.4-5.5s5.4 2.5 5.4 5.5v10H283V65Z"/>
+            <path class="town-building body" d="M326 39h38v36h-38z"/>
+            <path class="town-window" d="M335 48h7v7h-7zm14 0h7v7h-7zm-14 13h7v7h-7zm14 13h7v7h-7z"/>
+            <path class="town-lamp" d="M386 28h6v47h-6z"/>
+            <path class="town-lamp-head" d="M380 18h18l-4 15h-10l-4-15Z"/>
+            <path class="town-ground" d="M14 76h390"/>
+          </svg>
+        </span>
+      </footer>
+    </div>
+  </body>
+</html>

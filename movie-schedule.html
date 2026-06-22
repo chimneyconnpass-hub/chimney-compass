@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Project Map | Chimney Compass</title>
+    <title>上映スケジュール | Chimney Compass</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&display=swap" rel="stylesheet">
@@ -12,9 +12,9 @@
     <script src="./assets/js/app.js?v=20260623l" defer></script>
   </head>
   <body>
-    <div class="site-shell page-shell">
+    <div class="site-shell page-shell wide-shell">
       <header class="site-header compact">
-        <a class="back-link" href="./index.html">‹ 戻る</a>
+        <a class="back-link" href="./projects.html">‹ Project Map</a>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="メニュー">
           <span></span><span></span><span></span>
         </button>
@@ -25,13 +25,13 @@
         </nav>
       </header>
       <main>
-        <section class="page-hero">
-          <span class="hero-icon" aria-hidden="true">🎪</span>
-          <h1>Project Map</h1>
-          <p>今、動いているプロジェクト一覧</p>
+        <section class="page-hero movie-page-hero">
+          <span class="hero-icon" aria-hidden="true">🎬</span>
+          <h1>上映スケジュール</h1>
+          <p>映画館ごとの上映期間</p>
         </section>
-        <section class="section">
-          <div class="project-list" data-project-map></div>
+        <section class="section movie-schedule-section">
+          <div class="movie-schedule-page" data-movie-schedule></div>
         </section>
       </main>
     </div>

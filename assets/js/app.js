@@ -31,6 +31,23 @@
     return a.dateObject - b.dateObject;
   }
 
+  function byUpcomingStatus(a, b) {
+    const todayTime = todayLocal().getTime();
+    const rank = (event) => {
+      const time = event.dateObject instanceof Date ? event.dateObject.getTime() : Number.POSITIVE_INFINITY;
+      if (time === todayTime) return 0;
+      if (time > todayTime) return 1;
+      return 2;
+    };
+    return rank(a) - rank(b) || byDate(a, b);
+  }
+
+  function isPastEvent(event) {
+    return event.dateObject instanceof Date &&
+      !Number.isNaN(event.dateObject.getTime()) &&
+      event.dateObject < todayLocal();
+  }
+
   function todayLocal() {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -67,9 +84,10 @@
   }
 
   function tapeColorIndex(event, eventIndex) {
+    const calendarColors = [1, 2, 4, 5];
     const seed = `${event.date}-${event.area}-${event.title}-${eventIndex}`;
     const total = Array.from(seed).reduce((sum, char) => sum + char.charCodeAt(0), 0);
-    return (total % 5) + 1;
+    return calendarColors[total % calendarColors.length];
   }
 
   function escapeHtml(value) {
@@ -102,6 +120,15 @@
   function formatScreeningDate(date) {
     if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
     return `${formatDateValue(date)}(${dayLabels[date.getDay()]})`;
+  }
+
+  function formatShortDate(date) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+    return `${date.getMonth() + 1}/${date.getDate()}`;
+  }
+
+  function formatMoviePeriod(item) {
+    return `${formatShortDate(item.startDate)} ～ ${item.endDate ? formatShortDate(item.endDate) : "終了日未定"}`;
   }
 
   function addDays(date, days) {
@@ -290,11 +317,17 @@
       .filter((event) => event.dateObject instanceof Date && !Number.isNaN(event.dateObject.getTime()))
       .sort(byDate);
     const today = todayLocal();
-    const year = 2026;
-    const initialMonth = today.getFullYear() === year ? today.getMonth() : 0;
+    const startYear = today.getFullYear();
+    const startMonth = today.getMonth();
+    const visibleMonths = Array.from({ length: 12 }, (_, offset) =>
+      new Date(startYear, startMonth + offset, 1)
+    );
 
-    function renderMonth(month, direction = "") {
-      month = Math.min(11, Math.max(0, month));
+    function renderMonth(offset, direction = "") {
+      offset = Math.min(visibleMonths.length - 1, Math.max(0, offset));
+      const activeDate = visibleMonths[offset];
+      const year = activeDate.getFullYear();
+      const month = activeDate.getMonth();
       const firstDay = new Date(year, month, 1);
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const monthEvents = sortedEvents.filter((event) =>
@@ -304,9 +337,14 @@
       const eventsByDate = groupEventsByDate(monthEvents);
 
       const weekdayHeader = dayLabels.map((day) => `<span class="month-weekday">${day}</span>`).join("");
-      const monthTabs = Array.from({ length: 12 }, (_, index) => `
-        <button class="month-tab ${index === month ? "is-active" : ""}" type="button" data-calendar-month="${index}" ${index === month ? `aria-current="true"` : ""}>${index + 1}月</button>
-      `).join("");
+      const monthTabs = visibleMonths.map((date, index) => {
+        const label = date.getMonth() === 0 && date.getFullYear() !== startYear
+          ? `${date.getFullYear()}年1月`
+          : `${date.getMonth() + 1}月`;
+        return `
+          <button class="month-tab ${date.getMonth() === 0 && date.getFullYear() !== startYear ? "month-tab-year" : ""} ${index === offset ? "is-active" : ""}" type="button" data-calendar-month="${index}" ${index === offset ? `aria-current="true"` : ""}>${label}</button>
+        `;
+      }).join("");
       const blankDays = Array.from({ length: firstDay.getDay() }, () => `<div class="month-day month-day-empty" aria-hidden="true"></div>`);
       const dayCards = Array.from({ length: daysInMonth }, (_, index) => {
         const day = index + 1;
@@ -359,7 +397,7 @@
       const commitMonth = () => {
         target.innerHTML = calendarHtml;
         target._calendarEvents = monthEvents;
-        target._calendarMonth = month;
+        target._calendarMonth = offset;
 
         if (direction) {
           const calendar = target.querySelector(".month-calendar");
@@ -381,14 +419,14 @@
     }
 
     target._renderCalendarMonth = renderMonth;
-    renderMonth(typeof target._calendarMonth === "number" ? target._calendarMonth : initialMonth);
+    renderMonth(typeof target._calendarMonth === "number" ? target._calendarMonth : 0);
 
     if (!target.dataset.calendarBound) {
       target.addEventListener("click", (event) => {
         const shiftButton = event.target.closest("[data-calendar-shift]");
         if (shiftButton) {
           if (target.dataset.calendarAnimating === "true") return;
-          const nextMonth = Math.min(11, Math.max(0, target._calendarMonth + Number(shiftButton.dataset.calendarShift)));
+          const nextMonth = Math.min(visibleMonths.length - 1, Math.max(0, target._calendarMonth + Number(shiftButton.dataset.calendarShift)));
           const direction = nextMonth > target._calendarMonth ? "left" : "right";
           target._renderCalendarMonth(nextMonth, direction);
           return;
@@ -417,7 +455,7 @@
 
         if (deltaX < 0 && target._calendarMonth > 0) {
           target._renderCalendarMonth(target._calendarMonth - 1, "right");
-        } else if (deltaX > 0 && target._calendarMonth < 11) {
+        } else if (deltaX > 0 && target._calendarMonth < visibleMonths.length - 1) {
           target._renderCalendarMonth(target._calendarMonth + 1, "left");
         }
       };
@@ -579,12 +617,12 @@
 
     const sortedEvents = data.events
       .slice()
-      .sort(byDate);
+      .sort(byUpcomingStatus);
 
     if (target) {
       target.innerHTML = sortedEvents
       .map((event) => `
-        <tr>
+        <tr class="${isPastEvent(event) ? "is-past" : ""}">
           <td>${escapeHtml(event.month)}</td>
           <td>${escapeHtml(formatMonthDay(event))}</td>
           <td>
@@ -619,7 +657,7 @@
           ].filter(Boolean);
 
           return `
-            <article class="schedule-card">
+            <article class="schedule-card ${isPastEvent(event) ? "is-past" : ""}">
               <p class="schedule-card-date">${escapeHtml(date)}</p>
               <h2>${escapeHtml(event.title)}</h2>
               <div class="schedule-card-actions">
@@ -697,9 +735,13 @@
     }
 
     const schedules = data.movieSchedules;
-    const minDate = new Date(Math.min(...schedules.map((item) => item.startDate.getTime())));
-    const latestStart = new Date(Math.max(...schedules.map((item) => item.startDate.getTime())));
-    const finiteEnds = schedules.filter((item) => item.endDate).map((item) => item.endDate.getTime());
+    const today = todayLocal();
+    const timelineSchedules = schedules.filter((item) => !item.endDate || item.endDate >= today);
+    const minDate = today;
+    const latestStart = timelineSchedules.length
+      ? new Date(Math.max(...timelineSchedules.map((item) => item.startDate.getTime())))
+      : today;
+    const finiteEnds = timelineSchedules.filter((item) => item.endDate).map((item) => item.endDate.getTime());
     const maxDate = new Date(Math.max(
       addDays(latestStart, 30).getTime(),
       finiteEnds.length ? Math.max(...finiteEnds) : 0
@@ -718,18 +760,21 @@
       `);
     }
 
-    const ganttRows = schedules.map((item, index) => {
+    const ganttRows = timelineSchedules.map((item, index) => {
       const startOffset = Math.max(0, daysBetween(minDate, item.startDate));
       const displayEnd = item.endDate || maxDate;
-      const duration = Math.max(1, daysBetween(item.startDate, displayEnd) + 1);
+      const visibleStart = item.startDate < minDate ? minDate : item.startDate;
+      const duration = Math.max(1, daysBetween(visibleStart, displayEnd) + 1);
       const left = (startOffset / totalDays) * 100;
       const width = Math.max(2.5, (duration / totalDays) * 100);
       const period = `${formatDateValue(item.startDate)}〜${item.endDate ? formatDateValue(item.endDate) : "終了日未定"}`;
+      const displayPeriod = formatMoviePeriod(item);
 
       return `
         <div class="movie-gantt-label">
           <strong>${escapeHtml(item.theater)}</strong>
           ${item.area ? `<span>${escapeHtml(item.area)}</span>` : ""}
+          <span class="movie-gantt-period">上映期間 ${escapeHtml(displayPeriod)}</span>
         </div>
         <div class="movie-gantt-lane">
           <a class="movie-gantt-bar tape-${(index % 5) + 1} ${item.endDate ? "" : "is-open-ended"}"
@@ -750,7 +795,7 @@
         </div>
         ${item.area ? `<p class="movie-schedule-area">${escapeHtml(item.area)}</p>` : ""}
         <dl>
-          <div><dt>上映期間</dt><dd>${escapeHtml(formatDateValue(item.startDate))}〜${item.endDate ? escapeHtml(formatDateValue(item.endDate)) : "終了日未定"}</dd></div>
+          <div><dt>上映期間</dt><dd>${escapeHtml(formatMoviePeriod(item))}</dd></div>
           ${item.memo ? `<div><dt>メモ</dt><dd>${escapeHtml(item.memo)}</dd></div>` : ""}
         </dl>
         ${item.url ? `<a class="movie-official-link" href="${safeHref(item.url)}"${externalLinkAttrs(item.url)}>公式サイトを見る</a>` : ""}
@@ -785,20 +830,7 @@
 
     const today = todayLocal();
     const selectedDate = new URLSearchParams(window.location.search).get("date") || "";
-    const sorted = data.screeningEvents.slice().sort((a, b) => {
-      const aSelected = a.date === selectedDate ? 0 : 1;
-      const bSelected = b.date === selectedDate ? 0 : 1;
-      if (aSelected !== bSelected) return aSelected - bSelected;
-
-      const aTime = a.dateObject.getTime();
-      const bTime = b.dateObject.getTime();
-      const todayTime = today.getTime();
-      const rank = (time) => time === todayTime ? 0 : time > todayTime ? 1 : 2;
-      const aRank = rank(aTime);
-      const bRank = rank(bTime);
-      if (aRank !== bRank) return aRank - bRank;
-      return aRank === 2 ? bTime - aTime : aTime - bTime;
-    });
+    const sorted = data.screeningEvents.slice().sort(byUpcomingStatus);
 
     target.innerHTML = sorted.map((event) => {
       const isPast = event.dateObject < today;
@@ -814,7 +846,7 @@
           <h2>${escapeHtml(event.displayTitle)}</h2>
           <dl>
             ${event.time ? `<div><dt>時間</dt><dd>${escapeHtml(event.time)}</dd></div>` : ""}
-            ${event.area ? `<div><dt>都道府県</dt><dd>${escapeHtml(event.area)}</dd></div>` : ""}
+            ${event.area ? `<div class="screening-area-row"><dt>都道府県</dt><dd>${escapeHtml(event.area)}</dd></div>` : ""}
             ${event.place ? `<div><dt>場所</dt><dd>${escapeHtml(event.place)}</dd></div>` : ""}
             ${event.memo ? `<div><dt>メモ</dt><dd>${escapeHtml(event.memo)}</dd></div>` : ""}
           </dl>

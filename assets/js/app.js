@@ -19,7 +19,12 @@
     pickups: [],
     events: [],
     townMap: window.CHIMNEY_STATIC_DATA.townMap,
-    projects: window.CHIMNEY_STATIC_DATA.projects
+    projects: [],
+    projectError: "",
+    movieSchedules: [],
+    movieScheduleError: "",
+    screeningEvents: [],
+    screeningScheduleError: ""
   };
 
   function byDate(a, b) {
@@ -89,12 +94,48 @@
     return isHttpUrl(value) ? ` target="_blank" rel="noopener noreferrer"` : "";
   }
 
-  function isCoffeeProject(project) {
-    return /COFFEE|コーヒー/i.test(String(project.title || ""));
+  function formatDateValue(date) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+    return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+  }
+
+  function formatScreeningDate(date) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+    return `${formatDateValue(date)}(${dayLabels[date.getDay()]})`;
+  }
+
+  function addDays(date, days) {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+  }
+
+  function daysBetween(start, end) {
+    return Math.round((end - start) / 86400000);
+  }
+
+  function screeningCalendarLabel(event) {
+    return compactArea(event.area);
+  }
+
+  function screeningCalendarMarkup(event) {
+    return `
+      <span class="screening-ticket-icon" aria-hidden="true">🎞️</span>
+      <span class="screening-ticket-label">イベント上映</span>
+      <span class="screening-ticket-title">${escapeHtml(screeningCalendarLabel(event))}</span>
+    `;
+  }
+
+  function handleCalendarEvent(event) {
+    if (event.source === "screening") {
+      window.location.href = `./screening-schedule.html?date=${encodeURIComponent(event.date)}`;
+      return;
+    }
+    openEventDetail(event);
   }
 
   function showLoading() {
-    document.querySelectorAll("[data-pickups], [data-home-calendar], [data-calendar-list], [data-schedule-table], [data-schedule-cards]")
+    document.querySelectorAll("[data-pickups], [data-home-calendar], [data-calendar-list], [data-schedule-table], [data-schedule-cards], [data-project-map], [data-movie-schedule], [data-screening-schedule]")
       .forEach((target) => {
         target.innerHTML = target.tagName === "TBODY"
           ? `<tr><td colspan="10">スプレッドシートを読み込み中です。</td></tr>`
@@ -104,7 +145,7 @@
 
   function showError(error) {
     const message = `スプレッドシートを読み込めませんでした。${error.message}`;
-    document.querySelectorAll("[data-pickups], [data-home-calendar], [data-calendar-list], [data-schedule-table], [data-schedule-cards]")
+    document.querySelectorAll("[data-pickups], [data-home-calendar], [data-calendar-list], [data-schedule-table], [data-schedule-cards], [data-project-map], [data-movie-schedule], [data-screening-schedule]")
       .forEach((target) => {
         target.innerHTML = target.tagName === "TBODY"
           ? `<tr><td colspan="10">${escapeHtml(message)}</td></tr>`
@@ -156,6 +197,13 @@
       const eventItems = events.map((event, eventIndex) => {
         const area = compactArea(event.area);
         const homeEventIndex = homeEvents.push(event) - 1;
+        if (event.source === "screening") {
+          return `
+            <button class="day-event screening-calendar-event" type="button" data-home-event-index="${homeEventIndex}">
+              ${screeningCalendarMarkup(event)}
+            </button>
+          `;
+        }
         return `
         <button class="day-event tape-label tape-${tapeColorIndex(event, eventIndex)}" type="button" data-home-event-index="${homeEventIndex}">
           ${area ? `<strong class="day-area">${escapeHtml(area)}</strong>` : ""}
@@ -183,7 +231,7 @@
         if (!button) return;
 
         const selected = target._homeCalendarEvents[Number(button.dataset.homeEventIndex)];
-        if (selected) openEventDetail(selected);
+        if (selected) handleCalendarEvent(selected);
       });
       target.dataset.homeCalendarBound = "true";
     }
@@ -269,6 +317,14 @@
           const area = compactArea(event.area);
           const eventIndex = eventIndexes.get(event);
 
+          if (event.source === "screening") {
+            return `
+              <button class="month-event screening-calendar-event" type="button" data-event-index="${eventIndex}">
+                ${screeningCalendarMarkup(event)}
+              </button>
+            `;
+          }
+
           return `
             <button class="month-event tape-label tape-${tapeColorIndex(event, eventIndex)}" type="button" data-event-index="${eventIndex}">
               ${area ? `<span class="month-event-area">${escapeHtml(area)}</span>` : ""}
@@ -352,7 +408,7 @@
         if (!button) return;
 
         const selected = target._calendarEvents[Number(button.dataset.eventIndex)];
-        if (selected) openEventDetail(selected);
+        if (selected) handleCalendarEvent(selected);
       });
 
       const swipeMonth = (deltaX, deltaY) => {
@@ -489,10 +545,25 @@
   }
 
   function projectAction(project) {
-    if (isCoffeeProject(project)) {
-      return `<button class="project-open-link" type="button" data-project-coffee>開く</button>`;
-    }
-    return `<a class="project-open-link" href="${safeHref(project.link)}"${externalLinkAttrs(project.link)}>開く</a>`;
+    if (!project.links.length) return "";
+
+    const tapeClasses = ["tape-pink", "tape-mint", "tape-cream"];
+    const links = project.links
+      .map((link, index) => `
+        <a class="project-tape-link ${tapeClasses[index % tapeClasses.length]}" href="${safeHref(link.url)}"${externalLinkAttrs(link.url)}>📌 ${escapeHtml(link.label)}</a>
+      `)
+      .join("");
+
+    return `
+      <div class="project-actions ${project.links.length > 1 ? "has-multiple-links" : ""}">
+        <button class="project-detail-trigger" type="button" aria-expanded="false">
+          詳細はこちら<span class="project-detail-arrow" aria-hidden="true"> ▼</span>
+        </button>
+        <div class="project-link-group" aria-label="${escapeHtml(project.title)}のリンク">
+          ${links}
+        </div>
+      </div>
+    `;
   }
 
   function renderScheduleTable() {
@@ -569,6 +640,16 @@
     const target = document.querySelector("[data-project-map]");
     if (!target) return;
 
+    if (data.projectError) {
+      target.innerHTML = `<p class="status-message status-error">ProjectMapシートを読み込めませんでした。${escapeHtml(data.projectError)}</p>`;
+      return;
+    }
+
+    if (!data.projects.length) {
+      target.innerHTML = `<p class="status-message">ProjectMapシートに表示対象のプロジェクトがありません。</p>`;
+      return;
+    }
+
     target.innerHTML = data.projects
       .map((project, index) => `
         <article class="project-spot ${project.tone || "cream"} ${project.isFeatured ? "is-featured" : ""}" style="--spot-index: ${index};">
@@ -584,12 +665,183 @@
 
     if (!target.dataset.projectBound) {
       target.addEventListener("click", (event) => {
-        const button = event.target.closest("[data-project-coffee]");
-        if (!button) return;
-        openCoffeeAddresses();
+        if (!window.matchMedia("(max-width: 620px)").matches) return;
+        const trigger = event.target.closest(".project-detail-trigger");
+        if (!trigger) return;
+
+        const actions = trigger.closest(".project-actions");
+        const shouldOpen = !actions.classList.contains("is-open");
+        target.querySelectorAll(".project-actions.is-open").forEach((item) => {
+          item.classList.remove("is-open");
+          item.querySelector(".project-detail-trigger")?.setAttribute("aria-expanded", "false");
+        });
+        actions.classList.toggle("is-open", shouldOpen);
+        trigger.setAttribute("aria-expanded", String(shouldOpen));
       });
       target.dataset.projectBound = "true";
     }
+  }
+
+  function renderMovieSchedule() {
+    const target = document.querySelector("[data-movie-schedule]");
+    if (!target) return;
+
+    if (data.movieScheduleError) {
+      target.innerHTML = `<p class="status-message status-error">上映スケジュールを読み込めませんでした。${escapeHtml(data.movieScheduleError)}</p>`;
+      return;
+    }
+
+    if (!data.movieSchedules.length) {
+      target.innerHTML = `<p class="status-message">現在表示できる上映スケジュールはありません。</p>`;
+      return;
+    }
+
+    const schedules = data.movieSchedules;
+    const minDate = new Date(Math.min(...schedules.map((item) => item.startDate.getTime())));
+    const latestStart = new Date(Math.max(...schedules.map((item) => item.startDate.getTime())));
+    const finiteEnds = schedules.filter((item) => item.endDate).map((item) => item.endDate.getTime());
+    const maxDate = new Date(Math.max(
+      addDays(latestStart, 30).getTime(),
+      finiteEnds.length ? Math.max(...finiteEnds) : 0
+    ));
+    const totalDays = Math.max(1, daysBetween(minDate, maxDate) + 1);
+    const dayWidth = 28;
+    const timelineWidth = Math.max(760, totalDays * dayWidth);
+    const ticks = [];
+
+    for (let date = new Date(minDate), index = 0; date <= maxDate; date = addDays(date, 7), index += 1) {
+      const offset = daysBetween(minDate, date);
+      ticks.push(`
+        <span class="movie-gantt-tick" style="left:${(offset / totalDays) * 100}%">
+          ${escapeHtml(`${date.getMonth() + 1}/${date.getDate()}`)}
+        </span>
+      `);
+    }
+
+    const ganttRows = schedules.map((item, index) => {
+      const startOffset = Math.max(0, daysBetween(minDate, item.startDate));
+      const displayEnd = item.endDate || maxDate;
+      const duration = Math.max(1, daysBetween(item.startDate, displayEnd) + 1);
+      const left = (startOffset / totalDays) * 100;
+      const width = Math.max(2.5, (duration / totalDays) * 100);
+      const period = `${formatDateValue(item.startDate)}〜${item.endDate ? formatDateValue(item.endDate) : "終了日未定"}`;
+
+      return `
+        <div class="movie-gantt-label">
+          <strong>${escapeHtml(item.theater)}</strong>
+          ${item.area ? `<span>${escapeHtml(item.area)}</span>` : ""}
+        </div>
+        <div class="movie-gantt-lane">
+          <a class="movie-gantt-bar tape-${(index % 5) + 1} ${item.endDate ? "" : "is-open-ended"}"
+             style="left:${left}%;width:${width}%"
+             href="${safeHref(item.url)}"${externalLinkAttrs(item.url)}
+             title="${escapeHtml(`${item.theater} ${period}`)}">
+            <span>${escapeHtml(item.theater)}</span>
+          </a>
+        </div>
+      `;
+    }).join("");
+
+    const cards = schedules.map((item) => `
+      <article class="movie-schedule-card">
+        <div class="movie-schedule-card-heading">
+          <span aria-hidden="true">🎬</span>
+          <h2>${escapeHtml(item.theater)}</h2>
+        </div>
+        ${item.area ? `<p class="movie-schedule-area">${escapeHtml(item.area)}</p>` : ""}
+        <dl>
+          <div><dt>上映期間</dt><dd>${escapeHtml(formatDateValue(item.startDate))}〜${item.endDate ? escapeHtml(formatDateValue(item.endDate)) : "終了日未定"}</dd></div>
+          ${item.memo ? `<div><dt>メモ</dt><dd>${escapeHtml(item.memo)}</dd></div>` : ""}
+        </dl>
+        ${item.url ? `<a class="movie-official-link" href="${safeHref(item.url)}"${externalLinkAttrs(item.url)}>公式サイトを見る</a>` : ""}
+      </article>
+    `).join("");
+
+    target.innerHTML = `
+      <div class="movie-gantt-wrap">
+        <div class="movie-gantt" style="--movie-timeline-width:${timelineWidth}px">
+          <div class="movie-gantt-corner">映画館</div>
+          <div class="movie-gantt-axis">${ticks.join("")}</div>
+          ${ganttRows}
+        </div>
+      </div>
+      <div class="movie-schedule-cards">${cards}</div>
+    `;
+  }
+
+  function renderScreeningSchedule() {
+    const target = document.querySelector("[data-screening-schedule]");
+    if (!target) return;
+
+    if (data.screeningScheduleError) {
+      target.innerHTML = `<p class="status-message status-error">イベント上映を読み込めませんでした。${escapeHtml(data.screeningScheduleError)}</p>`;
+      return;
+    }
+
+    if (!data.screeningEvents.length) {
+      target.innerHTML = `<p class="status-message">現在表示できるイベント上映はありません。</p>`;
+      return;
+    }
+
+    const today = todayLocal();
+    const selectedDate = new URLSearchParams(window.location.search).get("date") || "";
+    const sorted = data.screeningEvents.slice().sort((a, b) => {
+      const aSelected = a.date === selectedDate ? 0 : 1;
+      const bSelected = b.date === selectedDate ? 0 : 1;
+      if (aSelected !== bSelected) return aSelected - bSelected;
+
+      const aTime = a.dateObject.getTime();
+      const bTime = b.dateObject.getTime();
+      const todayTime = today.getTime();
+      const rank = (time) => time === todayTime ? 0 : time > todayTime ? 1 : 2;
+      const aRank = rank(aTime);
+      const bRank = rank(bTime);
+      if (aRank !== bRank) return aRank - bRank;
+      return aRank === 2 ? bTime - aTime : aTime - bTime;
+    });
+
+    target.innerHTML = sorted.map((event) => {
+      const isPast = event.dateObject < today;
+      const isToday = event.dateObject.getTime() === today.getTime();
+      const isSelected = selectedDate && event.date === selectedDate;
+      return `
+        <article class="screening-card ${isPast ? "is-past" : ""} ${isToday ? "is-today" : ""} ${isSelected ? "is-selected" : ""}">
+          <div class="screening-card-date">
+            <span aria-hidden="true">🎞️</span>
+            <time datetime="${escapeHtml(event.date)}">${escapeHtml(formatScreeningDate(event.dateObject))}</time>
+            ${isPast ? `<em>終了済み</em>` : isToday ? `<em>本日</em>` : ""}
+          </div>
+          <h2>${escapeHtml(event.displayTitle)}</h2>
+          <dl>
+            ${event.time ? `<div><dt>時間</dt><dd>${escapeHtml(event.time)}</dd></div>` : ""}
+            ${event.area ? `<div><dt>都道府県</dt><dd>${escapeHtml(event.area)}</dd></div>` : ""}
+            ${event.place ? `<div><dt>場所</dt><dd>${escapeHtml(event.place)}</dd></div>` : ""}
+            ${event.memo ? `<div><dt>メモ</dt><dd>${escapeHtml(event.memo)}</dd></div>` : ""}
+          </dl>
+          ${event.url ? `<a class="screening-detail-link" href="${safeHref(event.url)}"${externalLinkAttrs(event.url)}>詳細を見る</a>` : ""}
+        </article>
+      `;
+    }).join("");
+  }
+
+  function setupSubpageNavigation() {
+    const header = document.querySelector(".site-header.compact");
+    if (!header || header.querySelector(".subpage-utility-nav")) return;
+
+    header.querySelector(".back-link")?.remove();
+
+    const utilityNav = document.createElement("nav");
+    utilityNav.className = "subpage-utility-nav";
+    utilityNav.setAttribute("aria-label", "ページ移動");
+    utilityNav.innerHTML = `
+      <a class="utility-note-link" href="./index.html">🧭 トップページ</a>
+      <button class="utility-note-link" type="button" data-history-back>← 戻る</button>
+    `;
+    header.prepend(utilityNav);
+
+    utilityNav.querySelector("[data-history-back]")?.addEventListener("click", () => {
+      window.history.back();
+    });
   }
 
   function setupMenu() {
@@ -611,9 +863,12 @@
     renderCalendarList();
     renderScheduleTable();
     renderProjects();
+    renderMovieSchedule();
+    renderScreeningSchedule();
     renderCoffeeList();
   }
 
+  setupSubpageNavigation();
   setupMenu();
   renderTownMap();
   renderProjects();

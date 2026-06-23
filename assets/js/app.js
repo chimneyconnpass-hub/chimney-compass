@@ -571,6 +571,73 @@
     window.requestAnimationFrame(() => dialog.classList.add("is-open"));
   }
 
+  function setupCalendarPreview() {
+    const calendar = document.querySelector("[data-calendar-list]");
+    if (!calendar || document.querySelector("[data-calendar-preview]")) return;
+
+    const preview = document.createElement("aside");
+    preview.className = "calendar-event-preview";
+    preview.setAttribute("data-calendar-preview", "");
+    preview.setAttribute("role", "tooltip");
+    preview.hidden = true;
+    document.body.appendChild(preview);
+
+    const hidePreview = () => {
+      preview.hidden = true;
+      preview.classList.remove("is-visible", "is-left");
+    };
+
+    const showPreview = (button) => {
+      if (!window.matchMedia("(min-width: 621px)").matches) return;
+
+      const selected = calendar._calendarEvents?.[Number(button.dataset.eventIndex)];
+      if (!selected) return;
+
+      preview.innerHTML = `
+        <strong><span aria-hidden="true">🎬</span>${escapeHtml(selected.title || "イベント")}</strong>
+        <span><span aria-hidden="true">📍</span>${escapeHtml(selected.place || "場所未定")}</span>
+        <span><span aria-hidden="true">🕒</span>${escapeHtml(selected.time || "時間未定")}</span>
+      `;
+      preview.hidden = false;
+      preview.classList.add("is-visible");
+
+      const anchor = button.getBoundingClientRect();
+      const box = preview.getBoundingClientRect();
+      const gap = 8;
+      const edge = 10;
+      let left = anchor.right + gap;
+      let top = anchor.top - box.height + 8;
+
+      if (left + box.width > window.innerWidth - edge) {
+        left = anchor.left - box.width - gap;
+        preview.classList.add("is-left");
+      } else {
+        preview.classList.remove("is-left");
+      }
+
+      preview.style.left = `${Math.max(edge, Math.min(left, window.innerWidth - box.width - edge))}px`;
+      preview.style.top = `${Math.max(edge, Math.min(top, window.innerHeight - box.height - edge))}px`;
+    };
+
+    calendar.addEventListener("pointerover", (event) => {
+      const button = event.target.closest(".month-event[data-event-index]");
+      if (!button || !calendar.contains(button)) return;
+      if (event.relatedTarget && button.contains(event.relatedTarget)) return;
+      showPreview(button);
+    });
+
+    calendar.addEventListener("pointerout", (event) => {
+      const button = event.target.closest(".month-event[data-event-index]");
+      if (!button || !calendar.contains(button)) return;
+      if (event.relatedTarget && button.contains(event.relatedTarget)) return;
+      hidePreview();
+    });
+
+    calendar.addEventListener("click", hidePreview);
+    window.addEventListener("scroll", hidePreview, { passive: true });
+    window.addEventListener("resize", hidePreview);
+  }
+
   function openCoffeeAddresses() {
     const coffee = data.townMap.find((item) => item.title === "CHIMNEY COFFEE");
     if (!coffee || !coffee.addresses) return;
@@ -919,6 +986,7 @@
 
   setupSubpageNavigation();
   setupMenu();
+  setupCalendarPreview();
   renderTownMap();
   renderProjects();
   renderCoffeeList();

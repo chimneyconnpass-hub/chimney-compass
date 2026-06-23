@@ -7,9 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./assets/css/styles.css?v=20260623zg">
-    <script src="./assets/js/data.js?v=20260623zg" defer></script>
-    <script src="./assets/js/app.js?v=20260623zg" defer></script>
+    <link rel="stylesheet" href="./assets/css/styles.css?v=20260623zh">
+    <script src="./assets/js/data.js?v=20260623zh" defer></script>
+    <script src="./assets/js/app.js?v=20260623zh" defer></script>
   </head>
   <body>
     <div class="site-shell page-shell wide-shell">
@@ -28,29 +28,11 @@
         <section class="page-hero">
           <span class="hero-icon" aria-hidden="true">📋</span>
           <h1>Schedule</h1>
-          <p>スプレッドシート表示用の一覧</p>
+          <p>今日から3日間のイベントガイド</p>
         </section>
-        <section class="section">
-          <div class="table-wrap">
-            <table class="schedule-table">
-              <thead>
-                <tr>
-                  <th>月</th>
-                  <th>日付</th>
-                  <th>タイトル</th>
-                  <th>チケット</th>
-                  <th>公式サイト</th>
-                  <th>種別</th>
-                  <th>地域</th>
-                  <th>場所</th>
-                  <th>時間</th>
-                  <th>メモ</th>
-                </tr>
-              </thead>
-              <tbody data-schedule-table></tbody>
-            </table>
-          </div>
-          <div class="schedule-card-list" data-schedule-cards></div>
+        <section class="section three-day-guide" data-three-day-guide>
+          <div class="three-day-tabs" role="tablist" aria-label="日付を選択" data-three-day-tabs></div>
+          <div class="three-day-panel" role="tabpanel" data-three-day-panel></div>
         </section>
       </main>
     </div>

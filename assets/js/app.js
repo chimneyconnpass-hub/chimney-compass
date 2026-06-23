@@ -131,6 +131,18 @@
     return `${formatShortDate(item.startDate)} ～ ${item.endDate ? formatShortDate(item.endDate) : "終了日未定"}`;
   }
 
+  function isMovieShowingNow(item, today) {
+    return item.startDate <= today && (!item.endDate || item.endDate >= today);
+  }
+
+  function formatMovieBarLabel(item, today) {
+    const endLabel = item.endDate ? formatShortDate(item.endDate) : "終了日未定";
+    if (isMovieShowingNow(item, today)) {
+      return `▶️上映中 ～${endLabel}`;
+    }
+    return `📅 ${formatShortDate(item.startDate)}～${endLabel}`;
+  }
+
   function addDays(date, days) {
     const result = new Date(date);
     result.setDate(result.getDate() + days);
@@ -769,6 +781,8 @@
       const width = Math.max(2.5, (duration / totalDays) * 100);
       const period = `${formatDateValue(item.startDate)}〜${item.endDate ? formatDateValue(item.endDate) : "終了日未定"}`;
       const displayPeriod = formatMoviePeriod(item);
+      const barLabel = formatMovieBarLabel(item, today);
+      const isShowing = isMovieShowingNow(item, today);
 
       return `
         <div class="movie-gantt-label">
@@ -777,11 +791,11 @@
           <span class="movie-gantt-period">上映期間 ${escapeHtml(displayPeriod)}</span>
         </div>
         <div class="movie-gantt-lane">
-          <a class="movie-gantt-bar tape-${(index % 5) + 1} ${item.endDate ? "" : "is-open-ended"}"
+          <a class="movie-gantt-bar tape-${(index % 5) + 1} ${isShowing ? "is-showing" : ""} ${item.endDate ? "" : "is-open-ended"}"
              style="left:${left}%;width:${width}%"
              href="${safeHref(item.url)}"${externalLinkAttrs(item.url)}
              title="${escapeHtml(`${item.theater} ${period}`)}">
-            <span>${escapeHtml(item.theater)}</span>
+            <span>${escapeHtml(barLabel)}</span>
           </a>
         </div>
       `;
@@ -789,6 +803,9 @@
 
     const cards = schedules.map((item) => `
       <article class="movie-schedule-card">
+        <span class="movie-status-label ${isMovieShowingNow(item, today) ? "is-showing" : "is-upcoming"}">
+          ${isMovieShowingNow(item, today) ? "▶️上映中" : "📅上映予定"}
+        </span>
         <div class="movie-schedule-card-heading">
           <span aria-hidden="true">🎬</span>
           <h2>${escapeHtml(item.theater)}</h2>

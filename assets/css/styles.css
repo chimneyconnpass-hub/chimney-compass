@@ -2722,7 +2722,8 @@ main {
   }
 
   .calendar-days {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px 6px;
   }
 
   .calendar-weekday {
@@ -2730,8 +2731,9 @@ main {
   }
 
   .day-card {
-    min-height: 66px;
-    padding: 10px 12px;
+    order: var(--mobile-order);
+    min-height: 72px;
+    padding: 9px 8px 10px;
   }
 
   .day-date {
@@ -2744,26 +2746,43 @@ main {
   }
 
   .day-events {
-    gap: 5px;
-    margin-top: 8px;
+    gap: 6px;
+    margin-top: 7px;
   }
 
   .day-event {
-    padding: 8px 14px 9px;
-    max-width: min(100%, 250px);
+    width: auto;
+    max-width: 100%;
+    padding: 7px 10px 8px;
   }
 
   .day-area {
     display: block;
     margin: 0 0 2px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 900;
   }
 
   .day-title {
     display: block;
-    font-size: 14px;
+    font-size: 13px;
     overflow-wrap: anywhere;
+  }
+
+  [data-home-calendar] .screening-calendar-event {
+    padding: 6px 5px 7px 10px;
+  }
+
+  [data-home-calendar] .screening-ticket-icon {
+    font-size: 13px;
+  }
+
+  [data-home-calendar] .screening-ticket-label {
+    font-size: 8px;
+  }
+
+  [data-home-calendar] .screening-ticket-title {
+    font-size: 11px;
   }
 
   .schedule-band,

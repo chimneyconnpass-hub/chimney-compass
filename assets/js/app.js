@@ -165,6 +165,10 @@
     `;
   }
 
+  function calendarPreviewAttributes(event) {
+    return ` data-preview-title="${escapeHtml(event.title || "イベント")}" data-preview-place="${escapeHtml(event.place || "場所未定")}" data-preview-time="${escapeHtml(event.time || "時間未定")}"`;
+  }
+
   function handleCalendarEvent(event) {
     if (event.source === "screening") {
       window.location.href = `./screening-schedule.html?date=${encodeURIComponent(event.date)}`;
@@ -238,21 +242,23 @@
         const homeEventIndex = homeEvents.push(event) - 1;
         if (event.source === "screening") {
           return `
-            <button class="day-event screening-calendar-event" type="button" data-home-event-index="${homeEventIndex}">
+            <button class="day-event screening-calendar-event" type="button" data-home-event-index="${homeEventIndex}"${calendarPreviewAttributes(event)}>
               ${screeningCalendarMarkup(event)}
             </button>
           `;
         }
         return `
-        <button class="day-event tape-label tape-${tapeColorIndex(event, eventIndex)}" type="button" data-home-event-index="${homeEventIndex}">
+        <button class="day-event tape-label tape-${tapeColorIndex(event, eventIndex)}" type="button" data-home-event-index="${homeEventIndex}"${calendarPreviewAttributes(event)}>
           ${area ? `<strong class="day-area">${escapeHtml(area)}</strong>` : ""}
           <strong class="day-title">${escapeHtml(event.title)}</strong>
         </button>
       `;
       }).join("");
 
+      const mobileOrder = index < 7 ? index * 2 : (index - 7) * 2 + 1;
+
       return `
-        <article class="day-card ${events.length ? "has-event" : ""}" aria-label="${date.getMonth() + 1}月${date.getDate()}日">
+        <article class="day-card ${events.length ? "has-event" : ""}" aria-label="${date.getMonth() + 1}月${date.getDate()}日" style="--mobile-order: ${mobileOrder}">
           <strong class="day-date">
             <span>${date.getMonth() + 1}/${date.getDate()}</span><span class="mobile-weekday">（${dayLabels[date.getDay()]}）</span>
           </strong>
@@ -369,14 +375,14 @@
 
           if (event.source === "screening") {
             return `
-              <button class="month-event screening-calendar-event" type="button" data-event-index="${eventIndex}">
+              <button class="month-event screening-calendar-event" type="button" data-event-index="${eventIndex}"${calendarPreviewAttributes(event)}>
                 ${screeningCalendarMarkup(event)}
               </button>
             `;
           }
 
           return `
-            <button class="month-event tape-label tape-${tapeColorIndex(event, eventIndex)}" type="button" data-event-index="${eventIndex}">
+            <button class="month-event tape-label tape-${tapeColorIndex(event, eventIndex)}" type="button" data-event-index="${eventIndex}"${calendarPreviewAttributes(event)}>
               ${area ? `<span class="month-event-area">${escapeHtml(area)}</span>` : ""}
               <span class="month-event-title">${escapeHtml(event.title)}</span>
             </button>
@@ -572,8 +578,18 @@
   }
 
   function setupCalendarPreview() {
-    const calendar = document.querySelector("[data-calendar-list]");
-    if (!calendar || document.querySelector("[data-calendar-preview]")) return;
+    const calendars = [
+      {
+        target: document.querySelector("[data-calendar-list]"),
+        eventSelector: ".month-event[data-event-index]"
+      },
+      {
+        target: document.querySelector("[data-home-calendar]"),
+        eventSelector: ".day-event[data-home-event-index]"
+      }
+    ].filter(({ target }) => target);
+
+    if (!calendars.length || document.querySelector("[data-calendar-preview]")) return;
 
     const preview = document.createElement("aside");
     preview.className = "calendar-event-preview";
@@ -587,16 +603,13 @@
       preview.classList.remove("is-visible", "is-left");
     };
 
-    const showPreview = (button) => {
+    const showPreview = (button, calendar) => {
       if (!window.matchMedia("(min-width: 621px)").matches) return;
 
-      const selected = calendar._calendarEvents?.[Number(button.dataset.eventIndex)];
-      if (!selected) return;
-
       preview.innerHTML = `
-        <strong><span aria-hidden="true">🎬</span>${escapeHtml(selected.title || "イベント")}</strong>
-        <span><span aria-hidden="true">📍</span>${escapeHtml(selected.place || "場所未定")}</span>
-        <span><span aria-hidden="true">🕒</span>${escapeHtml(selected.time || "時間未定")}</span>
+        <strong><span aria-hidden="true">🎬</span>${escapeHtml(button.dataset.previewTitle || "イベント")}</strong>
+        <span><span aria-hidden="true">📍</span>${escapeHtml(button.dataset.previewPlace || "場所未定")}</span>
+        <span><span aria-hidden="true">🕒</span>${escapeHtml(button.dataset.previewTime || "時間未定")}</span>
       `;
       preview.hidden = false;
       preview.classList.add("is-visible");
@@ -619,21 +632,24 @@
       preview.style.top = `${Math.max(edge, Math.min(top, window.innerHeight - box.height - edge))}px`;
     };
 
-    calendar.addEventListener("pointerover", (event) => {
-      const button = event.target.closest(".month-event[data-event-index]");
-      if (!button || !calendar.contains(button)) return;
-      if (event.relatedTarget && button.contains(event.relatedTarget)) return;
-      showPreview(button);
+    calendars.forEach((calendar) => {
+      calendar.target.addEventListener("pointerover", (event) => {
+        const button = event.target.closest(calendar.eventSelector);
+        if (!button || !calendar.target.contains(button)) return;
+        if (event.relatedTarget && button.contains(event.relatedTarget)) return;
+        showPreview(button, calendar);
+      });
+
+      calendar.target.addEventListener("pointerout", (event) => {
+        const button = event.target.closest(calendar.eventSelector);
+        if (!button || !calendar.target.contains(button)) return;
+        if (event.relatedTarget && button.contains(event.relatedTarget)) return;
+        hidePreview();
+      });
+
+      calendar.target.addEventListener("click", hidePreview);
     });
 
-    calendar.addEventListener("pointerout", (event) => {
-      const button = event.target.closest(".month-event[data-event-index]");
-      if (!button || !calendar.contains(button)) return;
-      if (event.relatedTarget && button.contains(event.relatedTarget)) return;
-      hidePreview();
-    });
-
-    calendar.addEventListener("click", hidePreview);
     window.addEventListener("scroll", hidePreview, { passive: true });
     window.addEventListener("resize", hidePreview);
   }

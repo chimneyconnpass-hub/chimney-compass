@@ -178,7 +178,7 @@
   }
 
   function showLoading() {
-    document.querySelectorAll("[data-pickups], [data-home-calendar], [data-calendar-list], [data-schedule-table], [data-schedule-cards], [data-project-map], [data-movie-schedule], [data-screening-schedule]")
+    document.querySelectorAll("[data-pickups], [data-home-calendar], [data-calendar-list], [data-schedule-table], [data-schedule-cards], [data-three-day-panel], [data-home-three-day-panel], [data-project-map], [data-movie-schedule], [data-screening-schedule]")
       .forEach((target) => {
         target.innerHTML = target.tagName === "TBODY"
           ? `<tr><td colspan="10">スプレッドシートを読み込み中です。</td></tr>`
@@ -188,7 +188,7 @@
 
   function showError(error) {
     const message = `スプレッドシートを読み込めませんでした。${error.message}`;
-    document.querySelectorAll("[data-pickups], [data-home-calendar], [data-calendar-list], [data-schedule-table], [data-schedule-cards], [data-project-map], [data-movie-schedule], [data-screening-schedule]")
+    document.querySelectorAll("[data-pickups], [data-home-calendar], [data-calendar-list], [data-schedule-table], [data-schedule-cards], [data-three-day-panel], [data-home-three-day-panel], [data-project-map], [data-movie-schedule], [data-screening-schedule]")
       .forEach((target) => {
         target.innerHTML = target.tagName === "TBODY"
           ? `<tr><td colspan="10">${escapeHtml(message)}</td></tr>`
@@ -769,6 +769,254 @@
     }
   }
 
+  function eventTimeSortValue(value) {
+    const match = String(value || "").match(/(\d{1,2})[:：](\d{2})/);
+    if (!match) return Number.POSITIVE_INFINITY;
+    return Number(match[1]) * 60 + Number(match[2]);
+  }
+
+  function scheduleGuidePlace(area, place) {
+    return [compactArea(area), String(place || "").trim()].filter(Boolean).join(" ");
+  }
+
+  function eventsForGuideDate(date) {
+    const isoDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    const targetTime = date.getTime();
+
+    const normalEvents = data.events
+      .filter((event) => event.source !== "screening" && event.date === isoDate)
+      .map((event) => ({
+        category: "通常イベント",
+        categoryClass: "is-regular",
+        title: event.title,
+        place: scheduleGuidePlace(event.area, event.place),
+        time: event.time,
+        memo: event.memo
+      }));
+
+    const screeningEvents = data.screeningEvents
+      .filter((event) => event.date === isoDate)
+      .map((event) => ({
+        category: "イベント上映",
+        categoryClass: "is-screening",
+        title: event.displayTitle,
+        place: scheduleGuidePlace(event.area, event.place),
+        time: event.time,
+        memo: event.memo
+      }));
+
+    const movieEvents = data.movieSchedules
+      .filter((event) => {
+        const startTime = event.startDate?.getTime();
+        const endTime = event.endDate?.getTime();
+        return Number.isFinite(startTime) && startTime <= targetTime && (!Number.isFinite(endTime) || endTime >= targetTime);
+      })
+      .map((event) => ({
+        category: "映画館上映",
+        categoryClass: "is-movie",
+        title: event.theater,
+        place: compactArea(event.area),
+        time: "",
+        memo: event.memo
+      }));
+
+    return [...normalEvents, ...screeningEvents, ...movieEvents]
+      .sort((a, b) => eventTimeSortValue(a.time) - eventTimeSortValue(b.time) || a.title.localeCompare(b.title, "ja"));
+  }
+
+  function renderThreeDayGuide() {
+    const guide = document.querySelector("[data-three-day-guide]");
+    const tabs = document.querySelector("[data-three-day-tabs]");
+    const panel = document.querySelector("[data-three-day-panel]");
+    if (!guide || !tabs || !panel) return;
+
+    const labels = ["本日", "明日", "翌々日"];
+    const dates = labels.map((label, index) => {
+      const date = addDays(todayLocal(), index);
+      return {
+        label,
+        date,
+        displayDate: `${date.getMonth() + 1}/${date.getDate()}（${dayLabels[date.getDay()]}）`
+      };
+    });
+
+    const renderDay = (selectedIndex) => {
+      const selected = dates[selectedIndex];
+      const events = eventsForGuideDate(selected.date);
+
+      tabs.querySelectorAll("[data-guide-day]").forEach((button, index) => {
+        const isSelected = index === selectedIndex;
+        button.classList.toggle("is-active", isSelected);
+        button.setAttribute("aria-selected", String(isSelected));
+        button.tabIndex = isSelected ? 0 : -1;
+      });
+
+      panel.setAttribute("aria-labelledby", `guide-tab-${selectedIndex}`);
+      panel.innerHTML = `
+        <div class="three-day-date-heading">
+          <strong>${escapeHtml(selected.label)}</strong>
+          <span>${escapeHtml(selected.displayDate)}</span>
+        </div>
+        ${events.length ? `
+          <div class="three-day-event-list">
+            ${events.map((event) => `
+              <article class="three-day-event-card ${event.categoryClass}">
+                <span class="three-day-category">${escapeHtml(event.category)}</span>
+                <h2>🎬 ${escapeHtml(event.title)}</h2>
+                <dl>
+                  <div><dt aria-label="場所">📍</dt><dd>${escapeHtml(event.place || "場所未定")}</dd></div>
+                  <div><dt aria-label="時間">🕒</dt><dd>${escapeHtml(event.time || "時間未定")}</dd></div>
+                  <div><dt aria-label="メモ">📝</dt><dd>${escapeHtml(event.memo || "—")}</dd></div>
+                </dl>
+              </article>
+            `).join("")}
+          </div>
+        ` : `<p class="three-day-empty">この日の予定はありません</p>`}
+      `;
+    };
+
+    tabs.innerHTML = dates.map((item, index) => `
+      <button class="three-day-tab ${index === 0 ? "is-active" : ""}" id="guide-tab-${index}" type="button"
+        role="tab" aria-selected="${index === 0 ? "true" : "false"}" data-guide-day="${index}">
+        <strong>${escapeHtml(item.label)}</strong>
+        <span>${escapeHtml(item.displayDate)}</span>
+      </button>
+    `).join("");
+
+    if (!guide.dataset.guideBound) {
+      tabs.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-guide-day]");
+        if (!button) return;
+        renderDay(Number(button.dataset.guideDay));
+      });
+      guide.dataset.guideBound = "true";
+    }
+
+    renderDay(0);
+  }
+
+  function homeEventsForGuideDate(date) {
+    const isoDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    const targetTime = date.getTime();
+
+    const regularEvents = data.events
+      .filter((event) => event.source !== "screening" && event.date === isoDate)
+      .map((event) => ({
+        category: "出没イベント",
+        categoryClass: "is-appearance",
+        venue: event.place || compactArea(event.area) || event.title,
+        eventName: event.title,
+        area: compactArea(event.area),
+        time: event.time,
+        memo: event.memo
+      }));
+
+    const screeningEvents = data.screeningEvents
+      .filter((event) => event.date === isoDate)
+      .map((event) => ({
+        category: "イベント上映",
+        categoryClass: "is-screening",
+        venue: event.place || compactArea(event.area) || event.displayTitle,
+        eventName: event.displayTitle,
+        area: compactArea(event.area),
+        time: event.time,
+        memo: event.memo
+      }));
+
+    const movieEvents = data.movieSchedules
+      .filter((event) => {
+        const startTime = event.startDate?.getTime();
+        const endTime = event.endDate?.getTime();
+        return Number.isFinite(startTime) && startTime <= targetTime && (!Number.isFinite(endTime) || endTime >= targetTime);
+      })
+      .map((event) => {
+        const startTime = event.startDate?.getTime();
+        const endTime = event.endDate?.getTime();
+        const isStart = startTime === targetTime;
+        const isEnd = Number.isFinite(endTime) && endTime === targetTime;
+        return {
+          category: isStart ? "上映開始" : isEnd ? "上映最終日" : "上映中",
+          categoryClass: isStart ? "is-movie-start" : isEnd ? "is-movie-end" : "is-movie-showing",
+          venue: event.theater,
+          eventName: "",
+          area: compactArea(event.area),
+          time: "",
+          memo: event.memo
+        };
+      });
+
+    return [...regularEvents, ...screeningEvents, ...movieEvents]
+      .sort((a, b) => eventTimeSortValue(a.time) - eventTimeSortValue(b.time) || a.venue.localeCompare(b.venue, "ja"));
+  }
+
+  function renderHomeThreeDayGuide() {
+    const guide = document.querySelector("[data-home-three-day-guide]");
+    const tabs = document.querySelector("[data-home-guide-tabs]");
+    const panel = document.querySelector("[data-home-three-day-panel]");
+    if (!guide || !tabs || !panel) return;
+
+    const labels = ["本日", "明日", "翌々日"];
+    const dates = labels.map((label, index) => {
+      const date = addDays(todayLocal(), index);
+      return {
+        label,
+        date,
+        displayDate: `${date.getMonth() + 1}/${date.getDate()}（${dayLabels[date.getDay()]}）`
+      };
+    });
+
+    const renderDay = (selectedIndex) => {
+      const selected = dates[selectedIndex];
+      const events = homeEventsForGuideDate(selected.date);
+
+      tabs.querySelectorAll("[data-home-guide-day]").forEach((button, index) => {
+        const isSelected = index === selectedIndex;
+        button.classList.toggle("is-active", isSelected);
+        button.setAttribute("aria-selected", String(isSelected));
+        button.tabIndex = isSelected ? 0 : -1;
+      });
+
+      panel.setAttribute("aria-labelledby", `home-guide-tab-${selectedIndex}`);
+      panel.innerHTML = events.length ? `
+        <div class="home-guide-list">
+          ${events.map((event) => `
+            <article class="home-guide-item ${event.categoryClass}">
+              <div class="home-guide-content">
+                <div class="home-guide-heading">
+                  <span class="home-guide-category">${escapeHtml(event.category)}</span>
+                  <strong>🎬 ${escapeHtml(event.venue)}</strong>
+                </div>
+                ${event.eventName && event.eventName !== event.venue ? `<p class="home-guide-event-name">${escapeHtml(event.eventName)}</p>` : ""}
+                <p><span aria-hidden="true">📍</span>${escapeHtml(event.area || "地域未定")}</p>
+                <p><span aria-hidden="true">🕒</span>${escapeHtml(event.time || "時間未定")}</p>
+                <p><span aria-hidden="true">📝</span>${escapeHtml(event.memo || "—")}</p>
+              </div>
+            </article>
+          `).join("")}
+        </div>
+      ` : `<p class="home-guide-empty">この日の予定はありません</p>`;
+    };
+
+    tabs.innerHTML = dates.map((item, index) => `
+      <button class="home-guide-tab ${index === 0 ? "is-active" : ""}" id="home-guide-tab-${index}" type="button"
+        role="tab" aria-selected="${index === 0 ? "true" : "false"}" data-home-guide-day="${index}">
+        <strong>${escapeHtml(item.label)}</strong>
+        <span>${escapeHtml(item.displayDate)}</span>
+      </button>
+    `).join("");
+
+    if (!guide.dataset.homeGuideBound) {
+      tabs.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-home-guide-day]");
+        if (!button) return;
+        renderDay(Number(button.dataset.homeGuideDay));
+      });
+      guide.dataset.homeGuideBound = "true";
+    }
+
+    renderDay(0);
+  }
+
   function renderProjects() {
     const target = document.querySelector("[data-project-map]");
     if (!target) return;
@@ -994,6 +1242,8 @@
     renderTownMap();
     renderCalendarList();
     renderScheduleTable();
+    renderThreeDayGuide();
+    renderHomeThreeDayGuide();
     renderProjects();
     renderMovieSchedule();
     renderScreeningSchedule();

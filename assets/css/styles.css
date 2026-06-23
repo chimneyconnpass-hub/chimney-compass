@@ -747,11 +747,14 @@ main {
 }
 
 .schedule-band {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: clamp(24px, 6vw, 64px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 290px;
+  gap: 16px 26px;
   border-bottom: 0;
+}
+
+.schedule-band-intro {
+  grid-column: 1;
 }
 
 .schedule-band p {
@@ -759,9 +762,171 @@ main {
   color: var(--muted);
 }
 
-.schedule-band-actions {
+.home-three-day-guide {
+  grid-column: 1;
+  min-width: 0;
+  padding: 9px 10px 11px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 25px, rgba(158, 118, 70, 0.055) 26px),
+    rgba(255, 252, 245, 0.48);
+  border-top: 1px solid rgba(139, 96, 48, 0.12);
+  border-bottom: 1px solid rgba(139, 96, 48, 0.12);
+}
+
+.home-guide-tabs {
   display: grid;
-  flex: 0 0 290px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 10px 0 9px;
+}
+
+.home-guide-tab {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  min-height: 43px;
+  padding: 5px 8px 6px;
+  color: var(--brown);
+  font: inherit;
+  background: #fff9ed;
+  border: 1px solid rgba(139, 96, 48, 0.14);
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(90, 48, 8, 0.06);
+  clip-path: polygon(0 0, 100% 0, 100% 38%, 95% 50%, 100% 62%, 100% 100%, 0 100%, 0 62%, 5% 50%, 0 38%);
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.home-guide-tab strong {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.home-guide-tab span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.home-guide-tab:hover,
+.home-guide-tab:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 9px rgba(90, 48, 8, 0.11);
+}
+
+.home-guide-tab.is-active {
+  background: #ead6b3;
+  border-color: rgba(112, 72, 29, 0.2);
+  box-shadow: 0 5px 10px rgba(90, 48, 8, 0.13);
+  transform: translateY(-2px);
+}
+
+.home-guide-panel {
+  min-height: 76px;
+}
+
+.home-guide-list {
+  display: grid;
+  gap: 5px;
+}
+
+.home-guide-item {
+  padding: 11px 12px;
+  background:
+    radial-gradient(circle at 8px 7px, rgba(139, 96, 48, 0.025) 1px, transparent 1.5px),
+    rgba(255, 253, 247, 0.88);
+  background-size: 15px 15px, auto;
+  clip-path: polygon(
+    0 4%, 5% 1%, 11% 4%, 18% 1%, 25% 3%, 33% 0, 42% 3%, 50% 1%,
+    59% 4%, 68% 1%, 76% 3%, 85% 0, 93% 3%, 100% 1%,
+    100% 96%, 94% 99%, 87% 96%, 79% 100%, 71% 97%, 63% 99%, 54% 96%,
+    46% 100%, 37% 97%, 29% 99%, 21% 96%, 13% 100%, 6% 97%, 0 99%
+  );
+  filter: drop-shadow(0 2px 2px rgba(90, 48, 8, 0.08));
+}
+
+.home-guide-category {
+  flex: 0 0 auto;
+  padding: 3px 6px 4px;
+  color: #655444;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+  background: #f1e8da;
+  border-radius: 5px;
+}
+
+.home-guide-item.is-screening .home-guide-category {
+  background: #fff0b6;
+}
+
+.home-guide-item.is-movie-start .home-guide-category,
+.home-guide-item.is-movie-showing .home-guide-category {
+  background: #e5f1f8;
+}
+
+.home-guide-item.is-movie-end .home-guide-category {
+  background: #f6e1e2;
+}
+
+.home-guide-content {
+  min-width: 0;
+}
+
+.home-guide-heading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  margin-bottom: 3px;
+}
+
+.home-guide-content strong {
+  min-width: 0;
+  color: var(--brown);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.home-guide-content p {
+  display: inline;
+  margin-right: 9px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.home-guide-content .home-guide-event-name {
+  display: block;
+  margin: 0 0 2px;
+  color: #74695f;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.home-guide-content p span {
+  margin-right: 3px;
+}
+
+.home-guide-empty {
+  padding: 18px 12px;
+  text-align: center;
+  background: rgba(255, 253, 247, 0.5);
+  border: 1px dashed rgba(139, 96, 48, 0.18);
+  border-radius: 8px;
+}
+
+.schedule-band-actions {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: grid;
+  align-self: start;
+  align-content: start;
+  grid-auto-rows: max-content;
   gap: 7px;
   width: 290px;
   margin-top: 48px;
@@ -771,14 +936,29 @@ main {
 .schedule-band-actions .button {
   width: 100%;
   min-width: 0;
-  min-height: 34px;
-  padding: 7px 12px;
-  color: #fffaf1;
-  font-size: 13px;
-  font-weight: 700;
+  min-height: 40px;
+  padding: 9px 12px;
+  color: #fffaf2;
+  font-size: 14px;
+  font-weight: 800;
   text-align: center;
-  background: #765438;
-  box-shadow: 0 3px 7px rgba(80, 43, 10, 0.13);
+  background: #775438;
+  border: 1px solid rgba(73, 42, 18, 0.22);
+  box-shadow: 0 4px 8px rgba(80, 43, 10, 0.16);
+}
+
+.schedule-band-actions .button:nth-child(2) {
+  background: #6e4c35;
+}
+
+.schedule-band-actions .button:nth-child(3) {
+  background: #65442f;
+}
+
+.schedule-band-actions .button:hover,
+.schedule-band-actions .button:focus-visible {
+  background: #805b3d;
+  box-shadow: 0 7px 12px rgba(80, 43, 10, 0.23);
 }
 
 .town-footer {
@@ -2635,6 +2815,172 @@ main {
   box-shadow: 0 7px 13px rgba(72, 66, 99, 0.18);
 }
 
+.three-day-guide {
+  padding-top: 18px;
+}
+
+.three-day-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.three-day-tab {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  min-height: 68px;
+  padding: 10px 12px;
+  color: var(--brown);
+  font: inherit;
+  text-align: center;
+  background: rgba(255, 250, 239, 0.78);
+  border: 1px solid rgba(139, 96, 48, 0.16);
+  border-radius: 9px 9px 6px 7px;
+  box-shadow: 0 2px 5px rgba(90, 48, 8, 0.06);
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.three-day-tab strong {
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.three-day-tab span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.three-day-tab:hover,
+.three-day-tab:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 11px rgba(90, 48, 8, 0.11);
+}
+
+.three-day-tab.is-active {
+  background: #ead7b5;
+  border-color: rgba(112, 72, 29, 0.22);
+  box-shadow: 0 7px 14px rgba(90, 48, 8, 0.14);
+  transform: translateY(-2px);
+}
+
+.three-day-panel {
+  min-height: 180px;
+}
+
+.three-day-date-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 13px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(139, 96, 48, 0.15);
+}
+
+.three-day-date-heading strong {
+  color: var(--brown);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.three-day-date-heading span {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.three-day-event-list {
+  display: grid;
+  gap: 13px;
+}
+
+.three-day-event-card {
+  position: relative;
+  padding: 19px 20px 18px;
+  background: rgba(255, 253, 247, 0.84);
+  border: 1px solid rgba(158, 118, 70, 0.15);
+  border-radius: 10px;
+  box-shadow: 0 5px 12px rgba(90, 48, 8, 0.075);
+}
+
+.three-day-event-card.is-movie {
+  border-left: 4px solid #bdd9e9;
+}
+
+.three-day-event-card.is-screening {
+  border-left: 4px solid #e3c75f;
+}
+
+.three-day-event-card.is-regular {
+  border-left: 4px solid #d8c8e5;
+}
+
+.three-day-category {
+  display: inline-block;
+  margin-bottom: 9px;
+  padding: 4px 9px 5px;
+  color: #665341;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  background: #f4ecdf;
+  border-radius: 999px;
+}
+
+.three-day-event-card.is-movie .three-day-category {
+  background: #eaf4f9;
+}
+
+.three-day-event-card.is-screening .three-day-category {
+  background: #fff2bf;
+}
+
+.three-day-event-card h2 {
+  margin: 0 0 13px;
+  color: var(--brown);
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.45;
+}
+
+.three-day-event-card dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.three-day-event-card dl div {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 7px;
+}
+
+.three-day-event-card dt,
+.three-day-event-card dd {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.three-day-event-card dd {
+  overflow-wrap: anywhere;
+}
+
+.three-day-empty {
+  margin: 0;
+  padding: 38px 18px;
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 800;
+  text-align: center;
+  background: rgba(255, 253, 247, 0.58);
+  border: 1px dashed rgba(139, 96, 48, 0.2);
+  border-radius: 10px;
+}
+
 @media (min-width: 780px) {
   .site-shell {
     width: min(100% - 28px, 1060px);
@@ -2694,6 +3040,53 @@ main {
   .schedule-card .schedule-official-button {
     min-height: 42px;
     font-size: 15px;
+  }
+
+  .three-day-guide {
+    padding-inline: 12px;
+  }
+
+  .three-day-tabs {
+    gap: 6px;
+    margin-bottom: 15px;
+  }
+
+  .three-day-tab {
+    min-height: 62px;
+    padding: 8px 5px;
+  }
+
+  .three-day-tab strong {
+    font-size: 15px;
+  }
+
+  .three-day-tab span {
+    font-size: 10px;
+  }
+
+  .three-day-date-heading {
+    margin-bottom: 11px;
+  }
+
+  .three-day-date-heading strong {
+    font-size: 18px;
+  }
+
+  .three-day-event-list {
+    gap: 11px;
+  }
+
+  .three-day-event-card {
+    padding: 16px 14px 15px;
+  }
+
+  .three-day-event-card h2 {
+    font-size: 18px;
+  }
+
+  .three-day-event-card dt,
+  .three-day-event-card dd {
+    font-size: 16px;
   }
 
   .section-heading-row {
@@ -2794,9 +3187,65 @@ main {
   }
 
   .schedule-band-actions {
+    grid-column: 1;
+    grid-row: auto;
     width: min(100%, 290px);
-    margin: 13px 0 0 auto;
+    margin: 11px 0 0 auto;
     justify-self: end;
+  }
+
+  .schedule-band-intro,
+  .home-three-day-guide {
+    grid-column: 1;
+    width: 100%;
+  }
+
+  .home-three-day-guide {
+    padding: 7px 7px 9px;
+  }
+
+  .home-guide-tabs {
+    gap: 4px;
+    margin-block: 8px 7px;
+  }
+
+  .home-guide-tab {
+    min-height: 40px;
+    padding: 4px 4px 5px;
+  }
+
+  .home-guide-item {
+    padding: 7px 8px;
+  }
+
+  .home-guide-list {
+    gap: 3px;
+  }
+
+  .home-guide-content p {
+    display: block;
+    margin-right: 0;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .home-guide-heading {
+    gap: 5px;
+    margin-bottom: 2px;
+  }
+
+  .home-guide-content strong {
+    font-size: 14px;
+  }
+
+  .home-guide-category {
+    padding: 3px 5px;
+    font-size: 9px;
+  }
+
+  .home-guide-content .home-guide-event-name {
+    margin-bottom: 1px;
+    font-size: 10px;
   }
 
   .event-body dl {

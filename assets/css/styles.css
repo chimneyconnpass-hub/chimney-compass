@@ -1636,6 +1636,69 @@ main {
   overflow-wrap: anywhere;
 }
 
+.calendar-event-preview[hidden] {
+  display: none;
+}
+
+.calendar-event-preview {
+  position: fixed;
+  z-index: 18;
+  display: grid;
+  gap: 5px;
+  width: min(220px, calc(100vw - 20px));
+  padding: 11px 13px 12px;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.45;
+  background:
+    linear-gradient(rgba(255, 253, 247, 0.96), rgba(255, 250, 240, 0.96)),
+    repeating-linear-gradient(0deg, transparent 0 19px, rgba(177, 142, 93, 0.08) 20px);
+  border: 1px solid rgba(139, 96, 48, 0.15);
+  border-radius: 8px 7px 9px 6px;
+  box-shadow: 0 9px 20px rgba(70, 43, 19, 0.16);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px) rotate(-0.4deg);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.calendar-event-preview::after {
+  content: "";
+  position: absolute;
+  right: 100%;
+  bottom: 12px;
+  border: 6px solid transparent;
+  border-right-color: rgba(255, 252, 245, 0.98);
+}
+
+.calendar-event-preview.is-left::after {
+  right: auto;
+  left: 100%;
+  border-right-color: transparent;
+  border-left-color: rgba(255, 252, 245, 0.98);
+}
+
+.calendar-event-preview.is-visible {
+  opacity: 1;
+  transform: translateY(0) rotate(-0.4deg);
+}
+
+.calendar-event-preview strong,
+.calendar-event-preview > span {
+  display: flex;
+  gap: 5px;
+}
+
+.calendar-event-preview strong {
+  color: var(--brown);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.calendar-event-preview > span {
+  color: var(--muted);
+}
+
 .event-dialog[hidden] {
   display: none;
 }
@@ -2593,6 +2656,10 @@ main {
 }
 
 @media (max-width: 620px) {
+  .calendar-event-preview {
+    display: none !important;
+  }
+
   .subpage-utility-nav {
     flex-direction: column;
     align-items: flex-start;

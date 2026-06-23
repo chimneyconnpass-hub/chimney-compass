@@ -1425,6 +1425,11 @@ main {
   transform-origin: center bottom;
 }
 
+.month-tab-year {
+  font-size: 10px;
+  white-space: nowrap;
+}
+
 .month-tab.is-active {
   min-height: 37px;
   padding-block: 8px 9px;
@@ -1837,6 +1842,12 @@ main {
   font-weight: 800;
 }
 
+.movie-gantt-label .movie-gantt-period {
+  color: rgba(90, 48, 8, 0.72);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .movie-gantt-lane {
   position: relative;
   background:
@@ -1976,14 +1987,17 @@ main {
 
 .screening-card-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 17px;
+  grid-template-columns: 1fr;
+  gap: 13px;
 }
 
 .screening-card {
   position: relative;
   display: grid;
-  align-content: start;
+  grid-template-columns: minmax(180px, 0.75fr) minmax(0, 1.35fr) auto;
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  gap: 5px 20px;
   min-width: 0;
   padding: 19px;
   background: linear-gradient(145deg, #fffbed, #f8e9b9);
@@ -2011,6 +2025,8 @@ main {
 }
 
 .screening-card-date {
+  grid-column: 1;
+  grid-row: 1;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -2035,6 +2051,8 @@ main {
 }
 
 .screening-card h2 {
+  grid-column: 1;
+  grid-row: 2;
   margin: 0 0 13px;
   color: var(--brown);
   font-size: 22px;
@@ -2043,6 +2061,8 @@ main {
 }
 
 .screening-card dl {
+  grid-column: 2;
+  grid-row: 1 / span 2;
   display: grid;
   gap: 8px;
   margin: 0 0 16px;
@@ -2069,7 +2089,15 @@ main {
   overflow-wrap: anywhere;
 }
 
+.screening-area-row dd {
+  color: var(--brown);
+  font-weight: 900;
+}
+
 .screening-detail-link {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  align-self: center;
   justify-self: start;
   margin-top: auto;
   padding: 8px 14px 9px;
@@ -2281,6 +2309,15 @@ main {
   text-underline-offset: 3px;
 }
 
+.schedule-table tr.is-past {
+  color: rgba(83, 59, 40, 0.58);
+  opacity: 0.68;
+}
+
+.schedule-table tr.is-past a {
+  filter: saturate(0.65);
+}
+
 .schedule-title-text {
   display: -webkit-box;
   max-width: 100%;
@@ -2379,6 +2416,20 @@ main {
   border: 1px solid rgba(158, 118, 70, 0.16);
   border-radius: 10px;
   box-shadow: 0 5px 12px rgba(90, 48, 8, 0.08);
+}
+
+.schedule-card.is-past {
+  color: rgba(83, 59, 40, 0.62);
+  opacity: 0.7;
+}
+
+.schedule-card.is-past h2,
+.schedule-card.is-past .schedule-card-date {
+  color: rgba(90, 48, 8, 0.65);
+}
+
+.schedule-card.is-past .schedule-link-button {
+  filter: saturate(0.65);
 }
 
 .schedule-card + .schedule-card {
@@ -2871,7 +2922,17 @@ main {
   }
 
   .screening-card {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
     padding: 17px;
+  }
+
+  .screening-card-date,
+  .screening-card h2,
+  .screening-card dl,
+  .screening-detail-link {
+    grid-column: 1;
+    grid-row: auto;
   }
 
   .town-footer {

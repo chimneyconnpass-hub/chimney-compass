@@ -7,9 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./assets/css/styles.css?v=20260624a">
-    <script src="./assets/js/data.js?v=20260624a" defer></script>
-    <script src="./assets/js/app.js?v=20260624a" defer></script>
+    <link rel="stylesheet" href="./assets/css/styles.css?v=20260628f">
+    <script src="./assets/js/data.js?v=20260628f" defer></script>
+    <script src="./assets/js/app.js?v=20260628f" defer></script>
   </head>
   <body>
     <div class="site-shell page-shell wide-shell">
@@ -28,27 +28,12 @@
         <section class="page-hero">
           <span class="hero-icon" aria-hidden="true">📋</span>
           <h1>Schedule</h1>
-          <p>スプレッドシート表示用の一覧</p>
+          <p>すべてのイベントを一覧で見る</p>
         </section>
-        <section class="section">
-          <div class="table-wrap">
-            <table class="schedule-table">
-              <thead>
-                <tr>
-                  <th>月</th>
-                  <th>日付</th>
-                  <th>タイトル</th>
-                  <th>チケット</th>
-                  <th>公式サイト</th>
-                  <th>種別</th>
-                  <th>地域</th>
-                  <th>場所</th>
-                  <th>時間</th>
-                  <th>メモ</th>
-                </tr>
-              </thead>
-              <tbody data-schedule-table></tbody>
-            </table>
+        <section class="section schedule-page-cards">
+          <div class="schedule-page-actions" aria-label="上映関連スケジュール">
+            <a class="button" href="./movie-schedule.html">🎬 映画館上映スケジュールを見る</a>
+            <a class="button" href="./screening-schedule.html">🎞️ イベント上映スケジュールを見る</a>
           </div>
           <div class="schedule-card-list" data-schedule-cards></div>
         </section>

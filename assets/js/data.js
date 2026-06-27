@@ -83,6 +83,16 @@ window.CHIMNEY_STATIC_DATA = {
       icon: "☕",
       color: "cream",
       url: "./coffee.html",
+      links: [
+        {
+          label: "店舗一覧",
+          url: "./coffee.html"
+        },
+        {
+          label: "通販",
+          url: "https://chimney-coffee.com/?srsltid=AfmBOoqdHB8fkPWbccNcj89eS-OsNKv1suqvaaM9_j6YtDUE1PgsgqhR"
+        }
+      ],
       addresses: [
         {
           name: "CHIMNEY COFFEE 渋谷本店",
@@ -97,11 +107,29 @@ window.CHIMNEY_STATIC_DATA = {
       ]
     },
     {
-      title: "YouTube",
-      label: "YouTube",
-      icon: "▶",
+      title: "メディア",
+      label: "メディア",
+      icon: "🎬",
       color: "pink",
-      url: "https://www.youtube.com/@akihironishino"
+      url: "https://www.youtube.com/@akihironishino",
+      links: [
+        {
+          label: "⧈ Instagram",
+          url: "https://www.instagram.com/japanesehandsome?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+        },
+        {
+          label: "𝕏 X",
+          url: "https://x.com/nishinoakihiro?s=20"
+        },
+        {
+          label: "▶ YouTube",
+          url: "https://www.youtube.com/@akihironishino"
+        },
+        {
+          label: "🎵 TikTok",
+          url: "https://www.tiktok.com/@backstory_youtube?is_from_webapp=1&sender_device=pc"
+        }
+      ]
     },
     {
       title: "スナックCANDY",

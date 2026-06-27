@@ -28,16 +28,28 @@ window.CHIMNEY_SHEET_CONFIG = {
         type: ["種別"]
       }
     },
+    movieSchedule: {
+      sheetName: "上映スケジュール",
+      name: "上映スケジュール",
+      columns: {
+        start: ["上映開始"],
+        end: ["上映終了"],
+        area: ["都道府県"],
+        theater: ["映画館"],
+        url: ["URL"],
+        memo: ["メモ"]
+      }
+    },
+    screeningSchedule: {
+      sheetName: "イベント上映",
+      name: "イベント上映",
+      range: "C4:J"
+    },
     projectMap: {
       sheetName: "ProjectMap",
       name: "ProjectMap",
-      columns: {
-        order: ["表示順"],
-        featured: ["注目"],
-        title: ["プロジェクト名"],
-        description: ["説明"],
-        link: ["リンク"]
-      }
+      cardRange: "B3:F24",
+      linkRange: "F17:J"
     }
   }
 };
@@ -71,6 +83,16 @@ window.CHIMNEY_STATIC_DATA = {
       icon: "☕",
       color: "cream",
       url: "./coffee.html",
+      links: [
+        {
+          label: "店舗一覧",
+          url: "./coffee.html"
+        },
+        {
+          label: "通販",
+          url: "https://chimney-coffee.com/?srsltid=AfmBOoqdHB8fkPWbccNcj89eS-OsNKv1suqvaaM9_j6YtDUE1PgsgqhR"
+        }
+      ],
       addresses: [
         {
           name: "CHIMNEY COFFEE 渋谷本店",
@@ -85,11 +107,29 @@ window.CHIMNEY_STATIC_DATA = {
       ]
     },
     {
-      title: "YouTube",
-      label: "YouTube",
-      icon: "▶",
+      title: "メディア",
+      label: "メディア",
+      icon: "🎬",
       color: "pink",
-      url: "https://www.youtube.com/@akihironishino"
+      url: "https://www.youtube.com/@akihironishino",
+      links: [
+        {
+          label: "⧈ Instagram",
+          url: "https://www.instagram.com/japanesehandsome?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+        },
+        {
+          label: "𝕏 X",
+          url: "https://x.com/nishinoakihiro?s=20"
+        },
+        {
+          label: "▶ YouTube",
+          url: "https://www.youtube.com/@akihironishino"
+        },
+        {
+          label: "🎵 TikTok",
+          url: "https://www.tiktok.com/@backstory_youtube?is_from_webapp=1&sender_device=pc"
+        }
+      ]
     },
     {
       title: "スナックCANDY",
@@ -98,19 +138,12 @@ window.CHIMNEY_STATIC_DATA = {
       color: "yellow",
       url: "https://salon.jp/candy"
     }
-  ],
-  projects: [
-    { icon: "🎬", title: "映画", description: "映画関連の上映会・お知らせ。", link: "./calendar.html", tone: "blue" },
-    { icon: "🎤", title: "全国講演会ツアー", description: "全国各地で行う講演会の日程一覧。", link: "./calendar.html", tone: "violet" },
-    { icon: "🎠", title: "美術館", description: "美術館の開催情報やイベント日程。", link: "./calendar.html", tone: "yellow" },
-    { icon: "🌱", title: "クラウドファンディング", description: "現在実施中の応援プロジェクト情報。", link: "./calendar.html", tone: "pink" },
-    { icon: "☕", title: "CHIMNEY COFFEE", description: "イベントや出店情報。", link: "./calendar.html", tone: "green" },
-    { icon: "🎫", title: "チムチケ", description: "チケットに関するイベントやお知らせ。", link: "./calendar.html", tone: "cream" }
   ]
 };
 
 (function () {
   const config = window.CHIMNEY_SHEET_CONFIG;
+  let sheetRequestSequence = 0;
 
   function normalizeHeader(value) {
     return String(value || "").replace(/\s+/g, "").trim();
@@ -186,7 +219,7 @@ window.CHIMNEY_STATIC_DATA = {
   function loadSheet(sheet) {
     return new Promise((resolve, reject) => {
       const sheetKey = sheet.gid || sheet.sheetName || sheet.name;
-      const callbackName = `chimneySheetCallback_${String(sheetKey).replace(/\W/g, "")}_${Date.now()}`;
+      const callbackName = `chimneySheetCallback_${String(sheetKey).replace(/\W/g, "")}_${Date.now()}_${sheetRequestSequence += 1}`;
       const url = new URL(`https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/gviz/tq`);
       if (sheet.gid) {
         url.searchParams.set("gid", sheet.gid);
@@ -226,6 +259,53 @@ window.CHIMNEY_STATIC_DATA = {
     });
   }
 
+  function loadSheetRange(sheet, range, label) {
+    return new Promise((resolve, reject) => {
+      const url = new URL(`https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/gviz/tq`);
+      url.searchParams.set("sheet", sheet.sheetName || sheet.name);
+      url.searchParams.set("range", range);
+      url.searchParams.set("headers", "0");
+      url.searchParams.set("tqx", "out:json");
+
+      const script = document.createElement("script");
+      const previousGoogle = window.google;
+      const timeout = window.setTimeout(() => {
+        cleanup();
+        reject(new Error(`${sheet.name} ${label} の読み込みがタイムアウトしました。`));
+      }, 12000);
+
+      function cleanup() {
+        window.clearTimeout(timeout);
+        if (previousGoogle === undefined) delete window.google;
+        else window.google = previousGoogle;
+        script.remove();
+      }
+
+      window.google = {
+        visualization: {
+          Query: {
+            setResponse(response) {
+              cleanup();
+              if (response.status !== "ok") {
+                reject(new Error(`${sheet.name} ${label} の読み込みに失敗しました。`));
+                return;
+              }
+              resolve(response.table.rows.map((row) => (row.c || []).map(readCell)));
+            }
+          }
+        }
+      };
+
+      script.onerror = () => {
+        cleanup();
+        reject(new Error(`${sheet.name} ${label} に接続できませんでした。`));
+      };
+
+      script.src = url.toString();
+      document.head.appendChild(script);
+    });
+  }
+
   function normalizePickup(row) {
     const position = Number(row.position);
     return {
@@ -256,22 +336,68 @@ window.CHIMNEY_STATIC_DATA = {
     };
   }
 
-  function normalizeProject(row) {
-    const order = Number(row.order);
-    const featured = String(row.featured || "").trim();
-    const title = cleanProjectTitle(row.title);
-    const link = projectLinkFor(title, row.link);
-
+  function normalizeMovieSchedule(row) {
+    const startDate = parseFlexibleDate(row.start);
+    const endDate = parseFlexibleDate(row.end);
     return {
-      order: Number.isFinite(order) ? order : 9999,
-      featured,
-      isFeatured: featured === "大" || featured.includes("⭐"),
-      icon: iconForProject(title),
-      title,
-      description: row.description || "",
-      link,
-      tone: "cream"
+      start: row.start,
+      end: row.end,
+      startDate,
+      endDate,
+      area: row.area || "",
+      theater: row.theater || "",
+      url: row.url || "",
+      memo: row.memo || ""
     };
+  }
+
+  function normalizeScreeningSchedule(row) {
+    const [dateValue, time, areaValue, place, titleValue, url, memo, calendarVisible] = row;
+    const dateObject = parseFlexibleDate(dateValue);
+    const title = String(titleValue || "").trim();
+    const area = String(areaValue || "").trim();
+    return {
+      date: dateObject ? dateToIso(dateObject) : "",
+      dateLabel: String(dateValue || "").trim(),
+      dateObject,
+      time: time || "",
+      area,
+      place: place || "",
+      title,
+      displayTitle: title || "イベント上映",
+      url: url || "",
+      memo: memo || "",
+      visible: String(calendarVisible || "").trim().toUpperCase() !== "FALSE"
+    };
+  }
+
+  function dateToIso(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  }
+
+  function parseFlexibleDate(value) {
+    const label = String(value || "").trim();
+    if (!label) return null;
+
+    const dateCall = label.match(/^Date\((\d+),(\d+),(\d+)\)$/);
+    if (dateCall) {
+      return new Date(Number(dateCall[1]), Number(dateCall[2]), Number(dateCall[3]));
+    }
+
+    const normalized = label
+      .replace(/[年月]/g, "/")
+      .replace(/日/g, "")
+      .replace(/[.-]/g, "/");
+    const parts = normalized.split("/").map((part) => Number(part));
+    if (parts.length >= 3 && parts.every(Number.isFinite)) {
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+    if (parts.length === 2 && parts.every(Number.isFinite)) {
+      return new Date(new Date().getFullYear(), parts[0] - 1, parts[1]);
+    }
+
+    const parsed = new Date(label);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
   function iconForType(type) {
@@ -286,52 +412,132 @@ window.CHIMNEY_STATIC_DATA = {
   function iconForProject(title) {
     const value = String(title || "");
     const upperValue = value.toUpperCase();
+    if (value.includes("上映会")) return "🎞️";
     if (value.includes("映画")) return "🎬";
-    if (value.includes("講演")) return "🎤";
-    if (value.includes("美術館")) return "🖼️";
-    if (value.includes("クラウド")) return "🌱";
+    if (value.includes("全国講演会") || value.includes("講演")) return "🎤";
+    if (value.includes("美術館")) return "🏛️";
+    if (value.includes("クラウドファンデ") || value.includes("クラファン")) return "🌱";
     if (upperValue.includes("COFFEE") || value.includes("コーヒー")) return "☕";
     if (value.includes("チムチケ") || value.includes("チケット")) return "🎫";
-    if (value.includes("本") || value.includes("絵本")) return "📖";
+    if (value.includes("見上げる家")) return "🏠";
+    if (value.includes("ニシノコンサル")) return "💡";
     return "📍";
   }
 
-  function projectLinkFor(title, link) {
-    const value = String(title || "");
-    const upperValue = value.toUpperCase();
-    const sheetLink = String(link || "").trim();
-    if (upperValue.includes("COFFEE") || value.includes("コーヒー")) return "#coffee-addresses";
-    if (sheetLink) return sheetLink;
-    if (value.includes("映画")) return "https://poupelle.com";
-    if (value.includes("講演")) return "https://kouenkai.chimney.town/";
-    if (value.includes("美術館")) return "https://kawaguchikomusicforest.jp/";
-    if (value.includes("クラウド")) return "https://www.picture-book.jp/";
-    if (value.includes("チムチケ") || value.includes("チケット")) return "https://chimney-ticket.jp/";
-    return "#";
+  async function loadProjectMap() {
+    const sheet = config.sheets.projectMap;
+    const cardRows = await loadSheetRange(sheet, sheet.cardRange, "カード情報");
+    const linkRows = await loadSheetRange(sheet, sheet.linkRange, "リンク情報");
+    const linksByProject = new Map();
+    const usesRequestedCardColumns = cardRows.filter((row) => isOrderValue(row[1])).length
+      >= cardRows.filter((row) => isOrderValue(row[0])).length;
+    const usesRequestedLinkColumns = linkRows.filter((row) => isHttpUrlValue(row[3])).length
+      >= linkRows.filter((row) => isHttpUrlValue(row[2])).length;
+
+    linkRows.forEach((row) => {
+      const [projectName, linkLabel, url, hidden] = usesRequestedLinkColumns
+        ? [row[1], row[2], row[3], row[4]]
+        : [row[0], row[1], row[2], row[3]];
+      const name = String(projectName || "").trim();
+      const label = String(linkLabel || "").trim();
+      const href = String(url || "").trim();
+      if (
+        !name ||
+        name === "プロジェクト名" ||
+        !label ||
+        !href ||
+        String(hidden || "").trim().toUpperCase() === "FALSE"
+      ) return;
+      if (!linksByProject.has(name)) linksByProject.set(name, []);
+      linksByProject.get(name).push({
+        label,
+        url: href
+      });
+    });
+
+    return cardRows
+      .map((row) => {
+        const [orderValue, featuredValue, titleValue, descriptionValue] = usesRequestedCardColumns
+          ? [row[1], row[2], row[3], row[4]]
+          : [row[0], row[1], row[2], row[3]];
+        const order = Number(orderValue);
+        const title = String(titleValue || "").trim();
+        const featured = String(featuredValue || "").trim();
+        return {
+          order: Number.isFinite(order) ? order : 9999,
+          featured,
+          isFeatured: featured === "大",
+          icon: iconForProject(title),
+          title,
+          description: String(descriptionValue || "").trim(),
+          links: linksByProject.get(title) || [],
+          tone: "cream"
+        };
+      })
+      .filter((project) => project.title && project.title !== "プロジェクト名")
+      .sort((a, b) => a.order - b.order);
   }
 
-  function cleanProjectTitle(title) {
-    const value = String(title || "").trim();
-    if (/chimney coffee/i.test(value)) return "CHIMNEY COFFEE";
-    if (value === "クラウドファンデング") return "クラウドファンディング";
-    return value;
+  async function loadScreeningSchedule() {
+    return loadSheetRange(
+      config.sheets.screeningSchedule,
+      config.sheets.screeningSchedule.range,
+      "上映情報"
+    );
+  }
+
+  function isHttpUrlValue(value) {
+    return /^https?:\/\//i.test(String(value || "").trim());
+  }
+
+  function isOrderValue(value) {
+    const text = String(value || "").trim();
+    return text !== "" && Number.isFinite(Number(text));
   }
 
   window.loadChimneyData = async function loadChimneyData() {
-    const projectRowsPromise = loadSheet(config.sheets.projectMap).catch(() => (
-      loadSheet({ ...config.sheets.projectMap, sheetName: "Project Map", name: "Project Map" }).catch(() => null)
-    ));
-    const [pickupRows, scheduleRows, projectRows] = await Promise.all([
+    const projectResultPromise = loadProjectMap()
+      .then((rows) => ({ rows, error: null }))
+      .catch((error) => ({ rows: [], error }));
+    const movieResultPromise = loadSheet(config.sheets.movieSchedule)
+      .then((rows) => ({ rows, error: null }))
+      .catch((error) => ({ rows: [], error }));
+    const screeningResultPromise = projectResultPromise
+      .then(() => loadScreeningSchedule())
+      .then((rows) => ({ rows, error: null }))
+      .catch((error) => ({ rows: [], error }));
+    const [pickupRows, scheduleRows, projectResult, movieResult, screeningResult] = await Promise.all([
       loadSheet(config.sheets.pickups),
       loadSheet(config.sheets.schedule),
-      projectRowsPromise
+      projectResultPromise,
+      movieResultPromise,
+      screeningResultPromise
     ]);
-    const sheetProjects = Array.isArray(projectRows)
-      ? projectRows
-        .map(normalizeProject)
-        .filter((project) => project.title)
-        .sort((a, b) => a.order - b.order)
+    const sheetProjects = Array.isArray(projectResult.rows) ? projectResult.rows : [];
+    const movieSchedules = Array.isArray(movieResult.rows)
+      ? movieResult.rows
+        .map(normalizeMovieSchedule)
+        .filter((item) => item.startDate && item.theater)
+        .sort((a, b) => a.startDate - b.startDate)
       : [];
+    const screeningEvents = Array.isArray(screeningResult.rows)
+      ? screeningResult.rows
+        .map(normalizeScreeningSchedule)
+        .filter((item) => item.visible && item.date && item.dateObject)
+        .sort((a, b) => a.dateObject - b.dateObject)
+      : [];
+    const calendarScreenings = screeningEvents.map((item) => ({
+      date: item.date,
+      dateLabel: item.dateLabel,
+      dateObject: item.dateObject,
+      title: item.displayTitle,
+      area: item.area,
+      place: item.place,
+      time: item.time,
+      memo: item.memo,
+      ticketUrl: item.url,
+      source: "screening"
+    }));
 
     return {
       pickups: pickupRows
@@ -341,9 +547,15 @@ window.CHIMNEY_STATIC_DATA = {
       events: scheduleRows
         .map(normalizeEvent)
         .filter((event) => event.date && event.title)
+        .concat(calendarScreenings)
         .sort((a, b) => a.dateObject - b.dateObject),
       townMap: window.CHIMNEY_STATIC_DATA.townMap,
-      projects: sheetProjects.length ? sheetProjects : window.CHIMNEY_STATIC_DATA.projects
+      projects: sheetProjects,
+      projectError: projectResult.error ? projectResult.error.message : "",
+      movieSchedules,
+      movieScheduleError: movieResult.error ? movieResult.error.message : "",
+      screeningEvents,
+      screeningScheduleError: screeningResult.error ? screeningResult.error.message : ""
     };
   };
 }());

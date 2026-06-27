@@ -1,19 +1,5 @@
 (async function () {
   const dayLabels = ["日", "月", "火", "水", "木", "金", "土"];
-  const typeColors = {
-    "📚 全国講演会": "green",
-    "🎬全国上映会ツアー": "violet",
-    "🎬舞台挨拶": "violet",
-    "🎬テスト上映": "violet",
-    "🏛️美術館見学": "yellow",
-    "🍺ビアガーデン": "yellow",
-    "🎁手渡し会": "cream",
-    "🥃 スナック西野": "blue",
-    "チケット": "green",
-    "クラファン": "pink",
-    "ほん": "violet",
-    "メディア": "blue"
-  };
 
   let data = {
     pickups: [],
@@ -57,30 +43,8 @@
     return event.dateLabel || "";
   }
 
-  function colorForType(type) {
-    return typeColors[type] || "green";
-  }
-
-  function compactType(type) {
-    return String(type || "")
-      .replace(/^[^\p{Letter}\p{Number}]+/u, "")
-      .replace(/\s+/g, "")
-      .trim();
-  }
-
   function compactArea(area) {
     return String(area || "").replace(/[【】]/g, "").trim();
-  }
-
-  function compactPrefecture(area) {
-    return compactArea(area).replace(/[都道府県]$/, "");
-  }
-
-  function compactPlace(place) {
-    return String(place || "")
-      .replace(/（.*?）|\(.*?\)/g, "")
-      .split(/[、,／/]/)[0]
-      .trim();
   }
 
   function tapeColorIndex(event, eventIndex) {
@@ -178,21 +142,17 @@
   }
 
   function showLoading() {
-    document.querySelectorAll("[data-pickups], [data-home-calendar], [data-calendar-list], [data-schedule-table], [data-schedule-cards], [data-three-day-panel], [data-home-three-day-panel], [data-project-map], [data-movie-schedule], [data-screening-schedule]")
+    document.querySelectorAll("[data-pickups], [data-home-calendar], [data-calendar-list], [data-schedule-cards], [data-home-three-day-panel], [data-project-map], [data-movie-schedule], [data-screening-schedule]")
       .forEach((target) => {
-        target.innerHTML = target.tagName === "TBODY"
-          ? `<tr><td colspan="10">スプレッドシートを読み込み中です。</td></tr>`
-          : `<p class="status-message">スプレッドシートを読み込み中です。</p>`;
+        target.innerHTML = `<p class="status-message">スプレッドシートを読み込み中です。</p>`;
       });
   }
 
   function showError(error) {
     const message = `スプレッドシートを読み込めませんでした。${error.message}`;
-    document.querySelectorAll("[data-pickups], [data-home-calendar], [data-calendar-list], [data-schedule-table], [data-schedule-cards], [data-three-day-panel], [data-home-three-day-panel], [data-project-map], [data-movie-schedule], [data-screening-schedule]")
+    document.querySelectorAll("[data-pickups], [data-home-calendar], [data-calendar-list], [data-schedule-cards], [data-home-three-day-panel], [data-project-map], [data-movie-schedule], [data-screening-schedule]")
       .forEach((target) => {
-        target.innerHTML = target.tagName === "TBODY"
-          ? `<tr><td colspan="10">${escapeHtml(message)}</td></tr>`
-          : `<p class="status-message status-error">${escapeHtml(message)}</p>`;
+        target.innerHTML = `<p class="status-message status-error">${escapeHtml(message)}</p>`;
       });
   }
 
@@ -293,13 +253,153 @@
 
     target.innerHTML = data.townMap
       .slice(0, 6)
-      .map((group) => `
-        <a class="town-card ${group.color}" href="${safeHref(group.url)}"${externalLinkAttrs(group.url)}>
-          <span class="town-icon" aria-hidden="true">${group.icon}</span>
-          <span class="town-title">${escapeHtml(group.title)}</span>
-        </a>
-      `)
+      .map((group) => {
+        const links = Array.isArray(group.links) ? group.links.filter((link) => link.label && link.url) : [];
+        const previewLinks = links.length ? links : [{ label: group.label || group.title, url: group.url }];
+        const previewData = escapeHtml(encodeURIComponent(JSON.stringify(previewLinks)));
+        const heading = `
+          <span class="town-heading">
+            <span class="town-icon" aria-hidden="true">${group.icon}</span>
+            <span class="town-title">${escapeHtml(group.title)}</span>
+          </span>
+        `;
+
+        if (links.length) {
+          return `
+            <article class="town-card town-card-multi ${group.color}" tabindex="0" aria-expanded="false" data-town-label="${escapeHtml(group.label || group.title)}" data-town-links="${previewData}">
+              ${heading}
+            </article>
+          `;
+        }
+
+        return `
+          <a class="town-card ${group.color}" href="${safeHref(group.url)}"${externalLinkAttrs(group.url)} data-town-label="${escapeHtml(group.label || group.title)}" data-town-links="${previewData}">
+            ${heading}
+          </a>
+        `;
+      })
       .join("");
+
+    if (!target.dataset.townBound) {
+      let preview = null;
+      const getTownPreview = () => {
+        if (preview) return preview;
+        preview = document.createElement("aside");
+        preview.className = "calendar-event-preview town-map-preview";
+        preview.setAttribute("data-town-preview", "");
+        preview.setAttribute("role", "tooltip");
+        preview.hidden = true;
+        document.body.appendChild(preview);
+        return preview;
+      };
+
+      let townPreviewTimer = 0;
+      const hideTownPreview = () => {
+        window.clearTimeout(townPreviewTimer);
+        if (!preview) return;
+        preview.hidden = true;
+        preview.classList.remove("is-visible", "is-left");
+        target.querySelectorAll(".town-card-multi[aria-expanded='true']").forEach((item) => {
+          item.setAttribute("aria-expanded", "false");
+        });
+      };
+
+      const scheduleTownPreviewHide = () => {
+        window.clearTimeout(townPreviewTimer);
+        townPreviewTimer = window.setTimeout(hideTownPreview, 120);
+      };
+
+      const showTownPreview = (card) => {
+        window.clearTimeout(townPreviewTimer);
+
+        const tooltip = getTownPreview();
+        const title = card.querySelector(".town-title")?.textContent?.trim() || "Town Map";
+        let links = [];
+        try {
+          links = JSON.parse(decodeURIComponent(card.dataset.townLinks || "[]"));
+        } catch (_error) {
+          links = [];
+        }
+        if (!links.length) return;
+
+        tooltip.innerHTML = `
+          <strong><span aria-hidden="true">🧭</span>${escapeHtml(title)}</strong>
+          ${links.map((link) => `<a class="town-preview-line" href="${safeHref(link.url)}"${externalLinkAttrs(link.url)}>📖 ${escapeHtml(link.label)}</a>`).join("")}
+        `;
+        tooltip.hidden = false;
+        tooltip.classList.add("is-visible");
+        card.setAttribute("aria-expanded", "true");
+
+        const anchor = card.getBoundingClientRect();
+        const box = tooltip.getBoundingClientRect();
+        const gap = 8;
+        const edge = 10;
+        let left = anchor.right + gap;
+        let top = anchor.top - box.height + 12;
+
+        if (left + box.width > window.innerWidth - edge) {
+          left = anchor.left - box.width - gap;
+          tooltip.classList.add("is-left");
+        } else {
+          tooltip.classList.remove("is-left");
+        }
+
+        tooltip.style.left = `${Math.max(edge, Math.min(left, window.innerWidth - box.width - edge))}px`;
+        tooltip.style.top = `${Math.max(edge, Math.min(top, window.innerHeight - box.height - edge))}px`;
+      };
+
+      getTownPreview().addEventListener("pointerover", () => {
+        window.clearTimeout(townPreviewTimer);
+      });
+
+      getTownPreview().addEventListener("pointerout", (event) => {
+        if (event.relatedTarget && preview?.contains(event.relatedTarget)) return;
+        scheduleTownPreviewHide();
+      });
+
+      target.addEventListener("pointerover", (event) => {
+        if (window.matchMedia("(max-width: 620px)").matches) return;
+        const card = event.target.closest(".town-card");
+        if (!card || !target.contains(card)) return;
+        if (event.relatedTarget && card.contains(event.relatedTarget)) return;
+
+        showTownPreview(card);
+      });
+
+      target.addEventListener("pointerout", (event) => {
+        if (window.matchMedia("(max-width: 620px)").matches) return;
+        const card = event.target.closest(".town-card");
+        if (!card || !target.contains(card)) return;
+        if (event.relatedTarget && card.contains(event.relatedTarget)) return;
+
+        scheduleTownPreviewHide();
+      });
+
+      target.addEventListener("click", (event) => {
+        if (event.target.closest("[data-town-preview]")) return;
+        const card = event.target.closest(".town-card");
+        if (!card || !target.contains(card)) return;
+        if (!window.matchMedia("(max-width: 620px)").matches) return;
+
+        event.preventDefault();
+        const isCurrentOpen = card.getAttribute("aria-expanded") === "true" && preview && !preview.hidden;
+        if (isCurrentOpen) {
+          hideTownPreview();
+        } else {
+          showTownPreview(card);
+        }
+      });
+
+      document.addEventListener("click", (event) => {
+        if (window.matchMedia("(min-width: 621px)").matches) return;
+        if (event.target.closest("[data-town-map], [data-town-preview]")) return;
+        hideTownPreview();
+      });
+
+      window.addEventListener("scroll", hideTownPreview, { passive: true });
+      window.addEventListener("resize", hideTownPreview);
+      target.dataset.townBound = "true";
+    }
   }
 
   function renderCoffeeList() {
@@ -699,14 +799,12 @@
     `;
   }
 
-  function renderScheduleTable() {
-    const target = document.querySelector("[data-schedule-table]");
+  function renderScheduleCards() {
     const cardTarget = document.querySelector("[data-schedule-cards]");
-    if (!target && !cardTarget) return;
+    if (!cardTarget) return;
 
     if (!data.events.length) {
-      if (target) target.innerHTML = `<tr><td colspan="10">スケジュールデータがありません。</td></tr>`;
-      if (cardTarget) cardTarget.innerHTML = `<p class="status-message">スケジュールデータがありません。</p>`;
+      cardTarget.innerHTML = `<p class="status-message">スケジュールデータがありません。</p>`;
       return;
     }
 
@@ -714,185 +812,41 @@
       .slice()
       .sort(byUpcomingStatus);
 
-    if (target) {
-      target.innerHTML = sortedEvents
-      .map((event) => `
-        <tr class="${isPastEvent(event) ? "is-past" : ""}">
-          <td>${escapeHtml(event.month)}</td>
-          <td>${escapeHtml(formatMonthDay(event))}</td>
-          <td>
-            <span class="schedule-title-text">${escapeHtml(event.title)}</span>
-            ${event.type ? `<span class="schedule-title-type">${escapeHtml(event.type)}</span>` : ""}
-          </td>
-          <td>${event.ticketUrl ? `<a class="schedule-link-button schedule-ticket-button" href="${safeHref(event.ticketUrl)}"${externalLinkAttrs(event.ticketUrl)}>🎫 詳細・申込</a>` : ""}</td>
-          <td>${isHttpUrl(event.official) ? `<a class="schedule-link-button schedule-official-button" href="${safeHref(event.official)}"${externalLinkAttrs(event.official)}>🌐公式</a>` : ""}</td>
-          <td><span class="table-pill ${colorForType(event.type)}">${escapeHtml(event.type)}</span></td>
-          <td>${escapeHtml(compactPrefecture(event.area))}</td>
-          <td><span class="schedule-place-text">${escapeHtml(compactPlace(event.place))}</span></td>
-          <td>${escapeHtml(event.time)}</td>
-          <td><span class="schedule-memo-text">${escapeHtml(event.memo)}</span></td>
-        </tr>
-      `)
+    cardTarget.innerHTML = sortedEvents
+      .map((event) => {
+        const date = event.dateObject instanceof Date && !Number.isNaN(event.dateObject.getTime())
+          ? `${formatMonthDay(event)}（${dayLabels[event.dateObject.getDay()]}）`
+          : formatMonthDay(event);
+        const area = compactArea(event.area);
+        const detailRows = [
+          event.type ? ["種別", event.type] : null,
+          area ? ["地域", area] : null,
+          event.place ? ["場所", event.place] : null,
+          event.time ? ["時間", event.time] : null,
+          event.memo ? ["メモ", event.memo] : null
+        ].filter(Boolean);
+
+        return `
+          <article class="schedule-card ${isPastEvent(event) ? "is-past" : ""}">
+            <p class="schedule-card-date">${escapeHtml(date)}</p>
+            <h2>${escapeHtml(event.title)}</h2>
+            <div class="schedule-card-actions">
+              ${event.ticketUrl ? `<a class="schedule-link-button schedule-ticket-button" href="${safeHref(event.ticketUrl)}"${externalLinkAttrs(event.ticketUrl)}>🎫 詳細・申込</a>` : ""}
+              ${isHttpUrl(event.official) ? `<a class="schedule-link-button schedule-official-button" href="${safeHref(event.official)}"${externalLinkAttrs(event.official)}>🌐公式</a>` : ""}
+            </div>
+            <dl>
+              ${detailRows.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}
+            </dl>
+          </article>
+        `;
+      })
       .join("");
-    }
-
-    if (cardTarget) {
-      cardTarget.innerHTML = sortedEvents
-        .map((event) => {
-          const date = event.dateObject instanceof Date && !Number.isNaN(event.dateObject.getTime())
-            ? `${formatMonthDay(event)}（${dayLabels[event.dateObject.getDay()]}）`
-            : formatMonthDay(event);
-          const area = compactArea(event.area);
-          const detailRows = [
-            event.type ? ["種別", event.type] : null,
-            area ? ["地域", area] : null,
-            event.place ? ["場所", event.place] : null,
-            event.time ? ["時間", event.time] : null,
-            event.memo ? ["メモ", event.memo] : null
-          ].filter(Boolean);
-
-          return `
-            <article class="schedule-card ${isPastEvent(event) ? "is-past" : ""}">
-              <p class="schedule-card-date">${escapeHtml(date)}</p>
-              <h2>${escapeHtml(event.title)}</h2>
-              <div class="schedule-card-actions">
-                ${event.ticketUrl ? `<a class="schedule-link-button schedule-ticket-button" href="${safeHref(event.ticketUrl)}"${externalLinkAttrs(event.ticketUrl)}>🎫 詳細・申込</a>` : ""}
-                ${isHttpUrl(event.official) ? `<a class="schedule-link-button schedule-official-button" href="${safeHref(event.official)}"${externalLinkAttrs(event.official)}>🌐公式</a>` : ""}
-              </div>
-              <dl>
-                ${detailRows.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}
-              </dl>
-            </article>
-          `;
-        })
-        .join("");
-    }
   }
 
   function eventTimeSortValue(value) {
     const match = String(value || "").match(/(\d{1,2})[:：](\d{2})/);
     if (!match) return Number.POSITIVE_INFINITY;
     return Number(match[1]) * 60 + Number(match[2]);
-  }
-
-  function scheduleGuidePlace(area, place) {
-    return [compactArea(area), String(place || "").trim()].filter(Boolean).join(" ");
-  }
-
-  function eventsForGuideDate(date) {
-    const isoDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-    const targetTime = date.getTime();
-
-    const normalEvents = data.events
-      .filter((event) => event.source !== "screening" && event.date === isoDate)
-      .map((event) => ({
-        category: "通常イベント",
-        categoryClass: "is-regular",
-        title: event.title,
-        place: scheduleGuidePlace(event.area, event.place),
-        time: event.time,
-        memo: event.memo
-      }));
-
-    const screeningEvents = data.screeningEvents
-      .filter((event) => event.date === isoDate)
-      .map((event) => ({
-        category: "イベント上映",
-        categoryClass: "is-screening",
-        title: event.displayTitle,
-        place: scheduleGuidePlace(event.area, event.place),
-        time: event.time,
-        memo: event.memo
-      }));
-
-    const movieEvents = data.movieSchedules
-      .filter((event) => {
-        const startTime = event.startDate?.getTime();
-        const endTime = event.endDate?.getTime();
-        return Number.isFinite(startTime) && startTime <= targetTime && (!Number.isFinite(endTime) || endTime >= targetTime);
-      })
-      .map((event) => ({
-        category: "映画館上映",
-        categoryClass: "is-movie",
-        title: event.theater,
-        place: compactArea(event.area),
-        time: "",
-        memo: event.memo
-      }));
-
-    return [...normalEvents, ...screeningEvents, ...movieEvents]
-      .sort((a, b) => eventTimeSortValue(a.time) - eventTimeSortValue(b.time) || a.title.localeCompare(b.title, "ja"));
-  }
-
-  function renderThreeDayGuide() {
-    const guide = document.querySelector("[data-three-day-guide]");
-    const tabs = document.querySelector("[data-three-day-tabs]");
-    const panel = document.querySelector("[data-three-day-panel]");
-    if (!guide || !tabs || !panel) return;
-
-    const labels = ["本日", "明日", "翌々日"];
-    const dates = labels.map((label, index) => {
-      const date = addDays(todayLocal(), index);
-      return {
-        label,
-        date,
-        displayDate: `${date.getMonth() + 1}/${date.getDate()}（${dayLabels[date.getDay()]}）`
-      };
-    });
-
-    const renderDay = (selectedIndex) => {
-      const selected = dates[selectedIndex];
-      const events = eventsForGuideDate(selected.date);
-
-      tabs.querySelectorAll("[data-guide-day]").forEach((button, index) => {
-        const isSelected = index === selectedIndex;
-        button.classList.toggle("is-active", isSelected);
-        button.setAttribute("aria-selected", String(isSelected));
-        button.tabIndex = isSelected ? 0 : -1;
-      });
-
-      panel.setAttribute("aria-labelledby", `guide-tab-${selectedIndex}`);
-      panel.innerHTML = `
-        <div class="three-day-date-heading">
-          <strong>${escapeHtml(selected.label)}</strong>
-          <span>${escapeHtml(selected.displayDate)}</span>
-        </div>
-        ${events.length ? `
-          <div class="three-day-event-list">
-            ${events.map((event) => `
-              <article class="three-day-event-card ${event.categoryClass}">
-                <span class="three-day-category">${escapeHtml(event.category)}</span>
-                <h2>🎬 ${escapeHtml(event.title)}</h2>
-                <dl>
-                  <div><dt aria-label="場所">📍</dt><dd>${escapeHtml(event.place || "場所未定")}</dd></div>
-                  <div><dt aria-label="時間">🕒</dt><dd>${escapeHtml(event.time || "時間未定")}</dd></div>
-                  <div><dt aria-label="メモ">📝</dt><dd>${escapeHtml(event.memo || "—")}</dd></div>
-                </dl>
-              </article>
-            `).join("")}
-          </div>
-        ` : `<p class="three-day-empty">この日の予定はありません</p>`}
-      `;
-    };
-
-    tabs.innerHTML = dates.map((item, index) => `
-      <button class="three-day-tab ${index === 0 ? "is-active" : ""}" id="guide-tab-${index}" type="button"
-        role="tab" aria-selected="${index === 0 ? "true" : "false"}" data-guide-day="${index}">
-        <strong>${escapeHtml(item.label)}</strong>
-        <span>${escapeHtml(item.displayDate)}</span>
-      </button>
-    `).join("");
-
-    if (!guide.dataset.guideBound) {
-      tabs.addEventListener("click", (event) => {
-        const button = event.target.closest("[data-guide-day]");
-        if (!button) return;
-        renderDay(Number(button.dataset.guideDay));
-      });
-      guide.dataset.guideBound = "true";
-    }
-
-    renderDay(0);
   }
 
   function homeEventsForGuideDate(date) {
@@ -1241,8 +1195,7 @@
     renderHomeCalendar();
     renderTownMap();
     renderCalendarList();
-    renderScheduleTable();
-    renderThreeDayGuide();
+    renderScheduleCards();
     renderHomeThreeDayGuide();
     renderProjects();
     renderMovieSchedule();

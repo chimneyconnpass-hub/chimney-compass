@@ -456,8 +456,7 @@ main {
   background: #fff4f0;
 }
 
-.event-pill,
-.table-pill {
+.event-pill {
   display: inline-flex;
   max-width: 100%;
   padding: 3px 5px;
@@ -655,8 +654,10 @@ main {
   align-items: center;
   justify-content: center;
   gap: 7px;
+  height: 78px;
   min-height: 58px;
   padding: 11px 12px;
+  overflow: hidden;
   text-align: center;
   background-image: radial-gradient(circle at 9px 9px, rgba(139, 99, 52, 0.018) 1px, transparent 1.5px);
   background-size: 17px 17px, auto;
@@ -666,6 +667,13 @@ main {
   cursor: pointer;
   transform: rotate(var(--tilt, -0.8deg));
   transition: transform 0.26s ease, box-shadow 0.26s ease, border-color 0.26s ease;
+}
+
+.town-card-multi {
+  flex-direction: column;
+  gap: 0;
+  align-items: center;
+  justify-content: center;
 }
 
 .town-card::before {
@@ -693,6 +701,13 @@ main {
   line-height: 1;
 }
 
+.town-heading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
 .town-title {
   color: var(--ink);
   font-family: var(--heading-font);
@@ -700,6 +715,10 @@ main {
   font-weight: 800;
   line-height: 1.25;
   text-shadow: 0.014em 0 currentColor;
+}
+
+.town-card-multi .town-heading {
+  transition: transform 0.2s ease;
 }
 
 .coffee-list {
@@ -1879,6 +1898,27 @@ main {
   color: var(--muted);
 }
 
+.town-map-preview {
+  width: min(238px, calc(100vw - 20px));
+  pointer-events: auto;
+}
+
+.town-map-preview .town-preview-line {
+  display: flex;
+  gap: 5px;
+  color: #5d442e;
+  font-weight: 800;
+  text-decoration: none;
+  background: linear-gradient(transparent 68%, rgba(244, 218, 162, 0.32) 68%);
+  transition: color 0.16s ease, transform 0.16s ease;
+}
+
+.town-map-preview .town-preview-line:hover,
+.town-map-preview .town-preview-line:focus-visible {
+  color: var(--brown);
+  transform: translateX(2px);
+}
+
 .event-dialog[hidden] {
   display: none;
 }
@@ -2533,151 +2573,6 @@ main {
   margin: 0;
 }
 
-.table-wrap {
-  overflow-x: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-
-.schedule-table {
-  width: 100%;
-  table-layout: fixed;
-  border-collapse: collapse;
-  background: rgba(255, 255, 255, 0.55);
-}
-
-.schedule-table th,
-.schedule-table td {
-  padding: 17px 8px;
-  border-bottom: 1px solid #eadfce;
-  text-align: left;
-  vertical-align: top;
-  font-size: 15px;
-  line-height: 1.65;
-  overflow-wrap: anywhere;
-}
-
-.schedule-table th {
-  background: #f0dfc6;
-  white-space: nowrap;
-}
-
-.schedule-table th:nth-child(3),
-.schedule-table td:nth-child(3) {
-  width: 20%;
-}
-
-.schedule-table th:nth-child(4),
-.schedule-table td:nth-child(4) {
-  width: 13%;
-}
-
-.schedule-table th:nth-child(5),
-.schedule-table td:nth-child(5) {
-  width: 8%;
-  text-align: center;
-}
-
-.schedule-table th:nth-child(1),
-.schedule-table td:nth-child(1) {
-  width: 5%;
-}
-
-.schedule-table th:nth-child(2),
-.schedule-table td:nth-child(2) {
-  width: 7%;
-}
-
-.schedule-table th:nth-child(6),
-.schedule-table td:nth-child(6) {
-  width: 0;
-  padding-inline: 0;
-  overflow: hidden;
-  color: transparent;
-  font-size: 0;
-}
-
-.schedule-table th:nth-child(7),
-.schedule-table td:nth-child(7) {
-  width: 7%;
-}
-
-.schedule-table th:nth-child(8),
-.schedule-table td:nth-child(8) {
-  width: 14%;
-}
-
-.schedule-table th:nth-child(9),
-.schedule-table td:nth-child(9) {
-  width: 9%;
-}
-
-.schedule-table th:nth-child(10),
-.schedule-table td:nth-child(10) {
-  width: 8%;
-}
-
-.schedule-table a {
-  color: var(--brown);
-  font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.schedule-table tr.is-past {
-  color: rgba(83, 59, 40, 0.58);
-  opacity: 0.68;
-}
-
-.schedule-table tr.is-past a {
-  filter: saturate(0.65);
-}
-
-.schedule-title-text {
-  display: -webkit-box;
-  max-width: 100%;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  font-size: 17px;
-  font-weight: 900;
-  line-height: 1.65;
-}
-
-.schedule-title-type {
-  display: block;
-  margin-top: 5px;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 900;
-  line-height: 1.35;
-}
-
-.schedule-place-text {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.5;
-}
-
-.schedule-table td:nth-child(9) {
-  color: var(--brown);
-  font-size: 17px;
-  font-weight: 900;
-  line-height: 1.45;
-}
-
-.schedule-memo-text {
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.55;
-}
-
 .schedule-link-button {
   display: inline-flex;
   align-items: center;
@@ -2723,6 +2618,30 @@ main {
 
 .schedule-card-list {
   display: none;
+}
+
+.schedule-page-cards {
+  display: grid;
+  gap: 18px;
+}
+
+.schedule-page-cards .schedule-card-list {
+  display: block;
+}
+
+.schedule-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.schedule-page-actions .button {
+  min-width: 230px;
+  max-width: 100%;
+  padding: 10px 16px;
+  font-size: 14px;
 }
 
 .schedule-card {
@@ -2815,172 +2734,6 @@ main {
   box-shadow: 0 7px 13px rgba(72, 66, 99, 0.18);
 }
 
-.three-day-guide {
-  padding-top: 18px;
-}
-
-.three-day-tabs {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 18px;
-}
-
-.three-day-tab {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-  min-height: 68px;
-  padding: 10px 12px;
-  color: var(--brown);
-  font: inherit;
-  text-align: center;
-  background: rgba(255, 250, 239, 0.78);
-  border: 1px solid rgba(139, 96, 48, 0.16);
-  border-radius: 9px 9px 6px 7px;
-  box-shadow: 0 2px 5px rgba(90, 48, 8, 0.06);
-  cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
-}
-
-.three-day-tab strong {
-  font-size: 17px;
-  font-weight: 900;
-}
-
-.three-day-tab span {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.three-day-tab:hover,
-.three-day-tab:focus-visible {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 11px rgba(90, 48, 8, 0.11);
-}
-
-.three-day-tab.is-active {
-  background: #ead7b5;
-  border-color: rgba(112, 72, 29, 0.22);
-  box-shadow: 0 7px 14px rgba(90, 48, 8, 0.14);
-  transform: translateY(-2px);
-}
-
-.three-day-panel {
-  min-height: 180px;
-}
-
-.three-day-date-heading {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 13px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(139, 96, 48, 0.15);
-}
-
-.three-day-date-heading strong {
-  color: var(--brown);
-  font-size: 20px;
-  font-weight: 900;
-}
-
-.three-day-date-heading span {
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.three-day-event-list {
-  display: grid;
-  gap: 13px;
-}
-
-.three-day-event-card {
-  position: relative;
-  padding: 19px 20px 18px;
-  background: rgba(255, 253, 247, 0.84);
-  border: 1px solid rgba(158, 118, 70, 0.15);
-  border-radius: 10px;
-  box-shadow: 0 5px 12px rgba(90, 48, 8, 0.075);
-}
-
-.three-day-event-card.is-movie {
-  border-left: 4px solid #bdd9e9;
-}
-
-.three-day-event-card.is-screening {
-  border-left: 4px solid #e3c75f;
-}
-
-.three-day-event-card.is-regular {
-  border-left: 4px solid #d8c8e5;
-}
-
-.three-day-category {
-  display: inline-block;
-  margin-bottom: 9px;
-  padding: 4px 9px 5px;
-  color: #665341;
-  font-size: 12px;
-  font-weight: 900;
-  line-height: 1;
-  background: #f4ecdf;
-  border-radius: 999px;
-}
-
-.three-day-event-card.is-movie .three-day-category {
-  background: #eaf4f9;
-}
-
-.three-day-event-card.is-screening .three-day-category {
-  background: #fff2bf;
-}
-
-.three-day-event-card h2 {
-  margin: 0 0 13px;
-  color: var(--brown);
-  font-size: 20px;
-  font-weight: 900;
-  line-height: 1.45;
-}
-
-.three-day-event-card dl {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-}
-
-.three-day-event-card dl div {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  gap: 7px;
-}
-
-.three-day-event-card dt,
-.three-day-event-card dd {
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.6;
-}
-
-.three-day-event-card dd {
-  overflow-wrap: anywhere;
-}
-
-.three-day-empty {
-  margin: 0;
-  padding: 38px 18px;
-  color: var(--muted);
-  font-size: 16px;
-  font-weight: 800;
-  text-align: center;
-  background: rgba(255, 253, 247, 0.58);
-  border: 1px dashed rgba(139, 96, 48, 0.2);
-  border-radius: 10px;
-}
-
 @media (min-width: 780px) {
   .site-shell {
     width: min(100% - 28px, 1060px);
@@ -3006,6 +2759,10 @@ main {
     display: none !important;
   }
 
+  .town-map-preview:not([hidden]) {
+    display: grid !important;
+  }
+
   .subpage-utility-nav {
     flex-direction: column;
     align-items: flex-start;
@@ -3018,10 +2775,6 @@ main {
 
   .town-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .table-wrap {
-    display: none;
   }
 
   .schedule-card-list {
@@ -3040,53 +2793,6 @@ main {
   .schedule-card .schedule-official-button {
     min-height: 42px;
     font-size: 15px;
-  }
-
-  .three-day-guide {
-    padding-inline: 12px;
-  }
-
-  .three-day-tabs {
-    gap: 6px;
-    margin-bottom: 15px;
-  }
-
-  .three-day-tab {
-    min-height: 62px;
-    padding: 8px 5px;
-  }
-
-  .three-day-tab strong {
-    font-size: 15px;
-  }
-
-  .three-day-tab span {
-    font-size: 10px;
-  }
-
-  .three-day-date-heading {
-    margin-bottom: 11px;
-  }
-
-  .three-day-date-heading strong {
-    font-size: 18px;
-  }
-
-  .three-day-event-list {
-    gap: 11px;
-  }
-
-  .three-day-event-card {
-    padding: 16px 14px 15px;
-  }
-
-  .three-day-event-card h2 {
-    font-size: 18px;
-  }
-
-  .three-day-event-card dt,
-  .three-day-event-card dd {
-    font-size: 16px;
   }
 
   .section-heading-row {

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Schedule | Chimney Compass</title>
+    <title>Admin | Chimney Compass</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&display=swap" rel="stylesheet">
@@ -12,7 +12,7 @@
     <script src="./assets/js/app.js?v=20260628h" defer></script>
   </head>
   <body>
-    <div class="site-shell page-shell wide-shell">
+    <div class="site-shell page-shell">
       <header class="site-header compact">
         <a class="back-link" href="./index.html">‹ 戻る</a>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="メニュー">
@@ -25,17 +25,22 @@
         </nav>
       </header>
       <main>
-        <section class="page-hero">
-          <span class="hero-icon" aria-hidden="true">📋</span>
-          <h1>Schedule</h1>
-          <p>すべてのイベントを一覧で見る</p>
+        <section class="page-hero admin-page-hero">
+          <span class="hero-icon" aria-hidden="true">🧭</span>
+          <h1>Admin</h1>
+          <p>X投稿用の本日の予定を作成</p>
         </section>
-        <section class="section schedule-page-cards">
-          <div class="schedule-page-actions" aria-label="上映関連スケジュール">
-            <a class="button" href="./movie-schedule.html">🎬 映画館上映スケジュールを見る</a>
-            <a class="button" href="./screening-schedule.html">🎞️ イベント上映スケジュールを見る</a>
+
+        <section class="section admin-post-section">
+          <div class="admin-post-heading">
+            <div>
+              <span class="admin-label">本日の投稿文</span>
+              <h2>Chimney Compass投稿メモ</h2>
+            </div>
+            <button class="button admin-copy-button" type="button" data-admin-copy>投稿文をコピー</button>
           </div>
-          <div class="schedule-card-list" data-schedule-cards></div>
+          <textarea class="admin-post-text" data-admin-post readonly>スプレッドシートを読み込み中です。</textarea>
+          <p class="admin-copy-status" aria-live="polite" data-admin-copy-status></p>
         </section>
       </main>
     </div>

@@ -2737,6 +2737,85 @@ main {
   box-shadow: 0 7px 13px rgba(72, 66, 99, 0.18);
 }
 
+.admin-page-hero {
+  margin-bottom: 18px;
+}
+
+.admin-post-section {
+  display: grid;
+  gap: 14px;
+  background:
+    linear-gradient(rgba(255, 253, 247, 0.8), rgba(255, 250, 240, 0.8)),
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(177, 142, 93, 0.08) 28px);
+}
+
+.admin-post-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.admin-label {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 5px 11px 6px;
+  color: #6b4a2e;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  background: #f8e8b7;
+  border-radius: 999px;
+  box-shadow: 0 2px 5px rgba(90, 48, 8, 0.08);
+  transform: rotate(-1.2deg);
+}
+
+.admin-post-heading h2 {
+  margin: 0;
+  color: var(--brown);
+  font-family: var(--heading-font);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.35;
+  text-shadow: 0.014em 0 currentColor;
+}
+
+.admin-copy-button {
+  flex: 0 0 auto;
+  min-width: 170px;
+  padding-inline: 18px;
+}
+
+.admin-post-text {
+  width: 100%;
+  min-height: 430px;
+  padding: 18px 18px 20px;
+  color: var(--ink);
+  font: 700 16px/1.75 var(--body-font);
+  white-space: pre-wrap;
+  resize: vertical;
+  background:
+    linear-gradient(rgba(255, 253, 247, 0.92), rgba(255, 251, 243, 0.92)),
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(177, 142, 93, 0.1) 28px);
+  border: 1px solid rgba(139, 96, 48, 0.18);
+  border-radius: 12px 10px 13px 11px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 8px 18px rgba(90, 48, 8, 0.08);
+}
+
+.admin-post-text:focus {
+  outline: 2px solid rgba(139, 96, 48, 0.22);
+  outline-offset: 3px;
+}
+
+.admin-copy-status {
+  min-height: 1.5em;
+  margin: 0;
+  color: var(--brown);
+  font-size: 14px;
+  font-weight: 900;
+  text-align: right;
+}
+
 @media (min-width: 780px) {
   .site-shell {
     width: min(100% - 28px, 1060px);
@@ -2796,6 +2875,25 @@ main {
   .schedule-card .schedule-official-button {
     min-height: 42px;
     font-size: 15px;
+  }
+
+  .admin-post-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-copy-button {
+    width: 100%;
+  }
+
+  .admin-post-text {
+    min-height: 360px;
+    padding: 15px;
+    font-size: 16px;
+  }
+
+  .admin-copy-status {
+    text-align: center;
   }
 
   .section-heading-row {

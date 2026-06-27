@@ -1899,6 +1899,7 @@ main {
 }
 
 .town-map-preview {
+  z-index: 1200;
   width: min(238px, calc(100vw - 20px));
   pointer-events: auto;
 }
@@ -1906,6 +1907,8 @@ main {
 .town-map-preview .town-preview-line {
   display: flex;
   gap: 5px;
+  position: relative;
+  z-index: 1;
   color: #5d442e;
   font-weight: 800;
   text-decoration: none;

@@ -866,8 +866,147 @@
     return Number(match[1]) * 60 + Number(match[2]);
   }
 
+  function isoDateFor(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  }
+
+  function formatAdminDate(date) {
+    return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}（${dayLabels[date.getDay()]}）`;
+  }
+
+  function movieStatusForDate(item, date) {
+    const targetTime = date.getTime();
+    const startTime = item.startDate?.getTime();
+    const endTime = item.endDate?.getTime();
+    if (startTime === targetTime) return "上映開始";
+    if (Number.isFinite(endTime) && endTime === targetTime) return "上映最終日";
+    return "上映中";
+  }
+
+  function placeTimeLine(place, time) {
+    const placeText = String(place || "").trim() || "場所未定";
+    const timeText = String(time || "").trim() || "時間未定";
+    return `${placeText}・${timeText}`;
+  }
+
+  function buildAdminPostText() {
+    const today = todayLocal();
+    const todayIso = isoDateFor(today);
+    const todayTime = today.getTime();
+    const lines = [
+      "🧭 Chimney Compass｜本日の予定",
+      formatAdminDate(today),
+      ""
+    ];
+
+    const regularEvents = data.events
+      .filter((event) => event.source !== "screening" && event.date === todayIso)
+      .sort((a, b) => eventTimeSortValue(a.time) - eventTimeSortValue(b.time) || a.title.localeCompare(b.title, "ja"));
+
+    const movieEvents = data.movieSchedules
+      .filter((item) => {
+        const startTime = item.startDate?.getTime();
+        const endTime = item.endDate?.getTime();
+        return Number.isFinite(startTime) && startTime <= todayTime && (!Number.isFinite(endTime) || endTime >= todayTime);
+      })
+      .sort((a, b) => a.theater.localeCompare(b.theater, "ja"));
+
+    const screeningEvents = data.screeningEvents
+      .filter((event) => event.date === todayIso)
+      .sort((a, b) => eventTimeSortValue(a.time) - eventTimeSortValue(b.time) || a.displayTitle.localeCompare(b.displayTitle, "ja"));
+
+    if (!regularEvents.length && !movieEvents.length && !screeningEvents.length) {
+      return "本日の予定は見つかりませんでした。";
+    }
+
+    if (regularEvents.length) {
+      lines.push("【通常イベント】");
+      regularEvents.forEach((event) => {
+        lines.push(event.title);
+        lines.push(placeTimeLine(event.place || compactArea(event.area), event.time));
+        lines.push("");
+      });
+    }
+
+    if (movieEvents.length) {
+      lines.push("【映画館上映】");
+      movieEvents.forEach((event) => {
+        lines.push(event.theater);
+        lines.push(movieStatusForDate(event, today));
+        lines.push("");
+      });
+    }
+
+    if (screeningEvents.length) {
+      lines.push("【イベント上映】");
+      screeningEvents.forEach((event) => {
+        lines.push(event.displayTitle);
+        lines.push(placeTimeLine(event.place || compactArea(event.area), event.time));
+        lines.push("");
+      });
+    }
+
+    lines.push("▼詳しくはこちら");
+    lines.push("https://chimneyconnpass-hub.github.io/chimney-compass/");
+    return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+
+  async function copyText(value, sourceElement = null) {
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(value);
+        return;
+      } catch (_error) {
+        // Browser permissions can reject clipboard access; fall back to the older copy path.
+      }
+    }
+
+    if (sourceElement) {
+      sourceElement.focus();
+      sourceElement.select();
+      const copied = document.execCommand("copy");
+      sourceElement.setSelectionRange(0, 0);
+      if (!copied) throw new Error("Copy command failed");
+      return;
+    }
+
+    const helper = document.createElement("textarea");
+    helper.value = value;
+    helper.setAttribute("readonly", "");
+    helper.style.position = "fixed";
+    helper.style.inset = "0 auto auto 0";
+    helper.style.opacity = "0";
+    document.body.appendChild(helper);
+    helper.select();
+    const copied = document.execCommand("copy");
+    helper.remove();
+    if (!copied) throw new Error("Copy command failed");
+  }
+
+  function renderAdminPost() {
+    const textarea = document.querySelector("[data-admin-post]");
+    const copyButton = document.querySelector("[data-admin-copy]");
+    const status = document.querySelector("[data-admin-copy-status]");
+    if (!textarea || !copyButton) return;
+
+    textarea.value = buildAdminPostText();
+    if (status) status.textContent = "";
+
+    if (!copyButton.dataset.copyBound) {
+      copyButton.addEventListener("click", async () => {
+        try {
+          await copyText(textarea.value, textarea);
+          if (status) status.textContent = "コピーしました";
+        } catch (_error) {
+          if (status) status.textContent = "コピーできませんでした。本文を選択してコピーしてください。";
+        }
+      });
+      copyButton.dataset.copyBound = "true";
+    }
+  }
+
   function homeEventsForGuideDate(date) {
-    const isoDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    const isoDate = isoDateFor(date);
     const targetTime = date.getTime();
 
     const regularEvents = data.events
@@ -1218,6 +1357,7 @@
     renderMovieSchedule();
     renderScreeningSchedule();
     renderCoffeeList();
+    renderAdminPost();
   }
 
   setupSubpageNavigation();

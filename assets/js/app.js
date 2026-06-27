@@ -282,6 +282,7 @@
 
     if (!target.dataset.townBound) {
       let preview = null;
+      let activeTownCard = null;
       const getTownPreview = () => {
         if (preview) return preview;
         preview = document.createElement("aside");
@@ -299,7 +300,8 @@
         if (!preview) return;
         preview.hidden = true;
         preview.classList.remove("is-visible", "is-left");
-        target.querySelectorAll(".town-card-multi[aria-expanded='true']").forEach((item) => {
+        activeTownCard = null;
+        target.querySelectorAll(".town-card[aria-expanded='true']").forEach((item) => {
           item.setAttribute("aria-expanded", "false");
         });
       };
@@ -328,6 +330,10 @@
         `;
         tooltip.hidden = false;
         tooltip.classList.add("is-visible");
+        activeTownCard = card;
+        target.querySelectorAll(".town-card[aria-expanded='true']").forEach((item) => {
+          if (item !== card) item.setAttribute("aria-expanded", "false");
+        });
         card.setAttribute("aria-expanded", "true");
 
         const anchor = card.getBoundingClientRect();
@@ -352,8 +358,17 @@
         window.clearTimeout(townPreviewTimer);
       });
 
+      getTownPreview().addEventListener("pointerenter", () => {
+        window.clearTimeout(townPreviewTimer);
+      });
+
       getTownPreview().addEventListener("pointerout", (event) => {
         if (event.relatedTarget && preview?.contains(event.relatedTarget)) return;
+        scheduleTownPreviewHide();
+      });
+
+      getTownPreview().addEventListener("pointerleave", (event) => {
+        if (event.relatedTarget && activeTownCard?.contains(event.relatedTarget)) return;
         scheduleTownPreviewHide();
       });
 
@@ -362,6 +377,7 @@
         const card = event.target.closest(".town-card");
         if (!card || !target.contains(card)) return;
         if (event.relatedTarget && card.contains(event.relatedTarget)) return;
+        if (event.relatedTarget && preview?.contains(event.relatedTarget)) return;
 
         showTownPreview(card);
       });
@@ -371,6 +387,7 @@
         const card = event.target.closest(".town-card");
         if (!card || !target.contains(card)) return;
         if (event.relatedTarget && card.contains(event.relatedTarget)) return;
+        if (event.relatedTarget && preview?.contains(event.relatedTarget)) return;
 
         scheduleTownPreviewHide();
       });

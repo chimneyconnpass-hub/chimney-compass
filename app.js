@@ -142,15 +142,18 @@
   }
 
   function showLoading() {
-    document.querySelectorAll("[data-pickups], [data-home-calendar], [data-calendar-list], [data-schedule-cards], [data-home-three-day-panel], [data-project-map], [data-movie-schedule], [data-screening-schedule]")
+    document.querySelectorAll("[data-pickups], [data-home-calendar], [data-calendar-list], [data-schedule-cards], [data-home-three-day-panel], [data-project-map], [data-town-map], [data-movie-schedule], [data-screening-schedule]")
       .forEach((target) => {
-        target.innerHTML = `<p class="status-message">スプレッドシートを読み込み中です。</p>`;
+        let message = "予定を準備しています…";
+        if (target.matches("[data-project-map]")) message = "Projectを準備しています…";
+        if (target.matches("[data-town-map]")) message = "案内板を準備しています…";
+        target.innerHTML = `<p class="status-message">${message}</p>`;
       });
   }
 
-  function showError(error) {
-    const message = `スプレッドシートを読み込めませんでした。${error.message}`;
-    document.querySelectorAll("[data-pickups], [data-home-calendar], [data-calendar-list], [data-schedule-cards], [data-home-three-day-panel], [data-project-map], [data-movie-schedule], [data-screening-schedule]")
+  function showError() {
+    const message = "データを読み込めませんでした。時間をおいて再度お試しください。";
+    document.querySelectorAll("[data-pickups], [data-home-calendar], [data-calendar-list], [data-schedule-cards], [data-home-three-day-panel], [data-project-map], [data-town-map], [data-movie-schedule], [data-screening-schedule]")
       .forEach((target) => {
         target.innerHTML = `<p class="status-message status-error">${escapeHtml(message)}</p>`;
       });
@@ -251,12 +254,11 @@
     const target = document.querySelector("[data-town-map]");
     if (!target) return;
 
-    target.innerHTML = data.townMap
-      .slice(0, 6)
+    const townItems = data.townMap
       .map((group) => {
         const links = Array.isArray(group.links) ? group.links.filter((link) => link.label && link.url) : [];
-        const previewLinks = links.length ? links : [{ label: group.label || group.title, url: group.url }];
-        const previewData = escapeHtml(encodeURIComponent(JSON.stringify(previewLinks)));
+        const noteLinks = links.length ? links : [{ label: group.label || group.title, url: group.url }];
+        const noteData = escapeHtml(encodeURIComponent(JSON.stringify(noteLinks)));
         const heading = `
           <span class="town-heading">
             <span class="town-icon" aria-hidden="true">${group.icon}</span>
@@ -264,157 +266,84 @@
           </span>
         `;
 
-        if (links.length) {
-          return `
-            <article class="town-card town-card-multi ${group.color}" tabindex="0" aria-expanded="false" data-town-label="${escapeHtml(group.label || group.title)}" data-town-links="${previewData}">
-              ${heading}
-            </article>
-          `;
-        }
-
         return `
-          <a class="town-card ${group.color}" href="${safeHref(group.url)}"${externalLinkAttrs(group.url)} data-town-label="${escapeHtml(group.label || group.title)}" data-town-links="${previewData}">
+          <button class="town-card ${links.length ? "town-card-multi" : ""} ${group.color}" type="button" aria-expanded="false" data-town-title="${escapeHtml(group.title)}" data-town-icon="${escapeHtml(group.icon)}" data-town-description="${escapeHtml(group.noteDescription || "")}" data-town-note-links="${noteData}">
             ${heading}
-          </a>
+          </button>
         `;
       })
       .join("");
 
-    if (!target.dataset.townBound) {
-      let preview = null;
-      let activeTownCard = null;
-      const getTownPreview = () => {
-        if (preview) return preview;
-        preview = document.createElement("aside");
-        preview.className = "calendar-event-preview town-map-preview";
-        preview.setAttribute("data-town-preview", "");
-        preview.setAttribute("role", "tooltip");
-        preview.hidden = true;
-        document.body.appendChild(preview);
-        return preview;
-      };
+    target.innerHTML = `
+      <div class="town-card-grid">
+        ${townItems}
+      </div>
+      <aside class="town-note" data-town-note>
+        <span class="town-note-clip" aria-hidden="true"></span>
+        <h3>🧭 案内所</h3>
+        <p class="town-note-empty">気になる場所を選んでください。</p>
+      </aside>
+    `;
 
-      let townPreviewTimer = 0;
-      const hideTownPreview = () => {
-        window.clearTimeout(townPreviewTimer);
-        if (!preview) return;
-        preview.hidden = true;
-        preview.classList.remove("is-visible", "is-left");
-        activeTownCard = null;
+    if (!target.dataset.townBound) {
+      const resetTownNote = () => {
+        const note = target.querySelector("[data-town-note]");
+        if (!note) return;
+        note.innerHTML = `
+          <span class="town-note-clip" aria-hidden="true"></span>
+          <h3>🧭 案内所</h3>
+          <p class="town-note-empty">気になる場所を選んでください。</p>
+        `;
         target.querySelectorAll(".town-card[aria-expanded='true']").forEach((item) => {
           item.setAttribute("aria-expanded", "false");
         });
       };
 
-      const scheduleTownPreviewHide = () => {
-        window.clearTimeout(townPreviewTimer);
-        townPreviewTimer = window.setTimeout(hideTownPreview, 120);
-      };
-
-      const showTownPreview = (card) => {
-        window.clearTimeout(townPreviewTimer);
-
-        const tooltip = getTownPreview();
-        const title = card.querySelector(".town-title")?.textContent?.trim() || "Town Map";
+      const writeTownNote = (card) => {
+        const note = target.querySelector("[data-town-note]");
+        if (!note) return;
+        const title = card.dataset.townTitle || card.querySelector(".town-title")?.textContent?.trim() || "Town Map";
+        const icon = card.dataset.townIcon || "🧭";
+        const description = card.dataset.townDescription || "";
         let links = [];
         try {
-          links = JSON.parse(decodeURIComponent(card.dataset.townLinks || "[]"));
+          links = JSON.parse(decodeURIComponent(card.dataset.townNoteLinks || "[]"));
         } catch (_error) {
           links = [];
         }
         if (!links.length) return;
 
-        tooltip.innerHTML = `
-          <strong><span aria-hidden="true">🧭</span>${escapeHtml(title)}</strong>
-          ${links.map((link) => `<a class="town-preview-line" href="${safeHref(link.url)}"${externalLinkAttrs(link.url)}>📖 ${escapeHtml(link.label)}</a>`).join("")}
-        `;
-        tooltip.hidden = false;
-        tooltip.classList.add("is-visible");
-        activeTownCard = card;
         target.querySelectorAll(".town-card[aria-expanded='true']").forEach((item) => {
           if (item !== card) item.setAttribute("aria-expanded", "false");
         });
         card.setAttribute("aria-expanded", "true");
-
-        const anchor = card.getBoundingClientRect();
-        const box = tooltip.getBoundingClientRect();
-        const gap = 8;
-        const edge = 10;
-        let left = anchor.right + gap;
-        let top = anchor.top - box.height + 12;
-
-        if (left + box.width > window.innerWidth - edge) {
-          left = anchor.left - box.width - gap;
-          tooltip.classList.add("is-left");
-        } else {
-          tooltip.classList.remove("is-left");
-        }
-
-        tooltip.style.left = `${Math.max(edge, Math.min(left, window.innerWidth - box.width - edge))}px`;
-        tooltip.style.top = `${Math.max(edge, Math.min(top, window.innerHeight - box.height - edge))}px`;
+        note.innerHTML = `
+          <span class="town-note-clip" aria-hidden="true"></span>
+          <h3>${escapeHtml(icon)} ${escapeHtml(title)}</h3>
+          ${description ? `<p class="town-note-description">${escapeHtml(description)}</p>` : ""}
+          <div class="town-note-links">
+            ${links.map((link) => {
+              const label = String(link.label || "");
+              const prefix = label.trim().startsWith("▶") ? "" : "▶ ";
+              return `<a class="town-note-link" href="${safeHref(link.url)}"${externalLinkAttrs(link.url)}>${prefix}${escapeHtml(label)}</a>`;
+            }).join("")}
+          </div>
+        `;
       };
 
-      getTownPreview().addEventListener("pointerover", () => {
-        window.clearTimeout(townPreviewTimer);
-      });
-
-      getTownPreview().addEventListener("pointerenter", () => {
-        window.clearTimeout(townPreviewTimer);
-      });
-
-      getTownPreview().addEventListener("pointerout", (event) => {
-        if (event.relatedTarget && preview?.contains(event.relatedTarget)) return;
-        scheduleTownPreviewHide();
-      });
-
-      getTownPreview().addEventListener("pointerleave", (event) => {
-        if (event.relatedTarget && activeTownCard?.contains(event.relatedTarget)) return;
-        scheduleTownPreviewHide();
-      });
-
-      target.addEventListener("pointerover", (event) => {
-        if (window.matchMedia("(max-width: 620px)").matches) return;
-        const card = event.target.closest(".town-card");
-        if (!card || !target.contains(card)) return;
-        if (event.relatedTarget && card.contains(event.relatedTarget)) return;
-        if (event.relatedTarget && preview?.contains(event.relatedTarget)) return;
-
-        showTownPreview(card);
-      });
-
-      target.addEventListener("pointerout", (event) => {
-        if (window.matchMedia("(max-width: 620px)").matches) return;
-        const card = event.target.closest(".town-card");
-        if (!card || !target.contains(card)) return;
-        if (event.relatedTarget && card.contains(event.relatedTarget)) return;
-        if (event.relatedTarget && preview?.contains(event.relatedTarget)) return;
-
-        scheduleTownPreviewHide();
-      });
-
       target.addEventListener("click", (event) => {
-        if (event.target.closest("[data-town-preview]")) return;
+        if (event.target.closest(".town-note-link")) return;
         const card = event.target.closest(".town-card");
         if (!card || !target.contains(card)) return;
-        if (!window.matchMedia("(max-width: 620px)").matches) return;
 
         event.preventDefault();
-        const isCurrentOpen = card.getAttribute("aria-expanded") === "true" && preview && !preview.hidden;
-        if (isCurrentOpen) {
-          hideTownPreview();
+        const isOpen = card.getAttribute("aria-expanded") === "true";
+        if (isOpen) {
+          resetTownNote();
         } else {
-          showTownPreview(card);
+          writeTownNote(card);
         }
       });
-
-      document.addEventListener("click", (event) => {
-        if (window.matchMedia("(min-width: 621px)").matches) return;
-        if (event.target.closest("[data-town-map], [data-town-preview]")) return;
-        hideTownPreview();
-      });
-
-      window.addEventListener("scroll", hideTownPreview, { passive: true });
-      window.addEventListener("resize", hideTownPreview);
       target.dataset.townBound = "true";
     }
   }
@@ -889,6 +818,54 @@
     return `${placeText}・${timeText}`;
   }
 
+  function normalizeHashtag(value) {
+    return String(value || "")
+      .replace(/https?:\/\/\S+/g, "")
+      .replace(/[\p{Extended_Pictographic}]/gu, "")
+      .replace(/[＃#]/g, "")
+      .replace(/[&＆]/g, "")
+      .replace(/[\s\u3000]+/g, "")
+      .replace(/[!"$%'\(\)\*\+,\.\/:;<=>\?@\[\\\]\^`\{\|\}~]/g, "")
+      .replace(/[、。，．・「」『』【】（）［］｛｝〈〉《》？！…〜～ー]+$/g, "")
+      .trim();
+  }
+
+  function addHashtag(tags, value) {
+    const tag = normalizeHashtag(value);
+    if (!tag || tag.length < 2) return;
+    if (tags.includes(tag)) return;
+    tags.push(tag.slice(0, 32));
+  }
+
+  function buildAdminHashtags({ regularEvents, movieEvents, screeningEvents, today }) {
+    const tags = [];
+    addHashtag(tags, "西野亮廣");
+    addHashtag(tags, "えんとつ町のプペル");
+
+    regularEvents.forEach((event) => {
+      addHashtag(tags, event.title);
+      addHashtag(tags, event.type);
+    });
+
+    if (movieEvents.length) {
+      addHashtag(tags, "映画館上映");
+      addHashtag(tags, "映画えんとつ町のプペル");
+      movieEvents.forEach((event) => {
+        addHashtag(tags, movieStatusForDate(event, today));
+      });
+    }
+
+    if (screeningEvents.length) {
+      addHashtag(tags, "イベント上映");
+      screeningEvents.forEach((event) => {
+        addHashtag(tags, event.displayTitle);
+      });
+    }
+
+    const dynamicTags = tags.filter((tag) => tag !== "ChimneyCompass").slice(0, 9);
+    return [...dynamicTags, "ChimneyCompass"].map((tag) => `#${tag}`);
+  }
+
   function buildAdminPostText() {
     const today = todayLocal();
     const todayIso = isoDateFor(today);
@@ -916,7 +893,13 @@
       .sort((a, b) => eventTimeSortValue(a.time) - eventTimeSortValue(b.time) || a.displayTitle.localeCompare(b.displayTitle, "ja"));
 
     if (!regularEvents.length && !movieEvents.length && !screeningEvents.length) {
-      return "本日の予定は見つかりませんでした。";
+      lines.push("本日の予定は見つかりませんでした。");
+      lines.push("");
+      lines.push("▼詳しくはこちら");
+      lines.push("https://chimneyconnpass-hub.github.io/chimney-compass/");
+      lines.push("");
+      lines.push(...buildAdminHashtags({ regularEvents, movieEvents, screeningEvents, today }));
+      return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
     }
 
     if (regularEvents.length) {
@@ -948,6 +931,8 @@
 
     lines.push("▼詳しくはこちら");
     lines.push("https://chimneyconnpass-hub.github.io/chimney-compass/");
+    lines.push("");
+    lines.push(...buildAdminHashtags({ regularEvents, movieEvents, screeningEvents, today }));
     return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
   }
 
@@ -1132,12 +1117,12 @@
     if (!target) return;
 
     if (data.projectError) {
-      target.innerHTML = `<p class="status-message status-error">ProjectMapシートを読み込めませんでした。${escapeHtml(data.projectError)}</p>`;
+      target.innerHTML = `<p class="status-message status-error">データを読み込めませんでした。時間をおいて再度お試しください。</p>`;
       return;
     }
 
     if (!data.projects.length) {
-      target.innerHTML = `<p class="status-message">ProjectMapシートに表示対象のプロジェクトがありません。</p>`;
+      target.innerHTML = `<p class="status-message">現在表示できるProjectはありません。</p>`;
       return;
     }
 
@@ -1178,7 +1163,7 @@
     if (!target) return;
 
     if (data.movieScheduleError) {
-      target.innerHTML = `<p class="status-message status-error">上映スケジュールを読み込めませんでした。${escapeHtml(data.movieScheduleError)}</p>`;
+      target.innerHTML = `<p class="status-message status-error">データを読み込めませんでした。時間をおいて再度お試しください。</p>`;
       return;
     }
 
@@ -1277,7 +1262,7 @@
     if (!target) return;
 
     if (data.screeningScheduleError) {
-      target.innerHTML = `<p class="status-message status-error">イベント上映を読み込めませんでした。${escapeHtml(data.screeningScheduleError)}</p>`;
+      target.innerHTML = `<p class="status-message status-error">データを読み込めませんでした。時間をおいて再度お試しください。</p>`;
       return;
     }
 

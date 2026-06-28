@@ -118,6 +118,10 @@ window.CHIMNEY_STATIC_DATA = {
           url: "https://www.instagram.com/japanesehandsome?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
         },
         {
+          label: "🎙 VOICY",
+          url: "https://voicy.jp/channel/941"
+        },
+        {
           label: "𝕏 X",
           url: "https://x.com/nishinoakihiro?s=20"
         },
@@ -137,6 +141,20 @@ window.CHIMNEY_STATIC_DATA = {
       icon: "🥃",
       color: "yellow",
       url: "https://salon.jp/candy"
+    },
+    {
+      title: "Project Map",
+      label: "Project Map",
+      icon: "🎪",
+      color: "cream",
+      url: "./project-map.html",
+      noteDescription: "えんとつ町のプロジェクト一覧はこちら。",
+      links: [
+        {
+          label: "Project Mapを見る",
+          url: "./project-map.html"
+        }
+      ]
     }
   ]
 };

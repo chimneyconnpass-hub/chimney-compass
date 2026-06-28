@@ -294,6 +294,7 @@
           <h3>🧭 案内所</h3>
           <p class="town-note-empty">気になる場所を選んでください。</p>
         `;
+        note.classList.remove("has-project-preview");
         target.querySelectorAll(".town-card[aria-expanded='true']").forEach((item) => {
           item.setAttribute("aria-expanded", "false");
         });
@@ -305,6 +306,10 @@
         const title = card.dataset.townTitle || card.querySelector(".town-title")?.textContent?.trim() || "Town Map";
         const icon = card.dataset.townIcon || "🧭";
         const description = card.dataset.townDescription || "";
+        const isProjectMap = title === "Project Map";
+        const projectNames = isProjectMap
+          ? data.projects.map((project) => project.title).filter(Boolean).slice(0, 10)
+          : [];
         let links = [];
         try {
           links = JSON.parse(decodeURIComponent(card.dataset.townNoteLinks || "[]"));
@@ -317,6 +322,7 @@
           if (item !== card) item.setAttribute("aria-expanded", "false");
         });
         card.setAttribute("aria-expanded", "true");
+        note.classList.toggle("has-project-preview", Boolean(projectNames.length));
         note.innerHTML = `
           <span class="town-note-clip" aria-hidden="true"></span>
           <h3>${escapeHtml(icon)} ${escapeHtml(title)}</h3>
@@ -328,6 +334,11 @@
               return `<a class="town-note-link" href="${safeHref(link.url)}"${externalLinkAttrs(link.url)}>${prefix}${escapeHtml(label)}</a>`;
             }).join("")}
           </div>
+          ${projectNames.length ? `
+            <div class="town-project-watermark" aria-hidden="true">
+              ${projectNames.map((name, index) => `<span style="--watermark-index:${index};">${escapeHtml(name)}</span>`).join("")}
+            </div>
+          ` : ""}
         `;
       };
 

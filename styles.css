@@ -750,6 +750,7 @@ main {
   position: relative;
   min-height: 166px;
   padding: 46px 36px 30px 70px;
+  overflow: hidden;
   color: #4a3829;
   font-size: 18px;
   font-weight: 800;
@@ -796,6 +797,8 @@ main {
 }
 
 .town-note h3 {
+  position: relative;
+  z-index: 1;
   margin: 0 0 10px;
   color: var(--brown);
   font-family: var(--heading-font);
@@ -806,16 +809,22 @@ main {
 }
 
 .town-note-empty {
+  position: relative;
+  z-index: 1;
   margin: 0;
   color: #665240;
 }
 
 .town-note-description {
+  position: relative;
+  z-index: 1;
   margin: 0 0 8px;
   color: #665240;
 }
 
 .town-note-links {
+  position: relative;
+  z-index: 1;
   display: grid;
   gap: 5px;
 }
@@ -837,6 +846,54 @@ main {
 .town-note-link:focus-visible {
   color: var(--brown);
   transform: translateX(3px);
+}
+
+.town-note.has-project-preview {
+  min-height: 360px;
+}
+
+.town-note.has-project-preview h3,
+.town-note.has-project-preview .town-note-description,
+.town-note.has-project-preview .town-note-links {
+  max-width: 38%;
+}
+
+.town-project-watermark {
+  position: absolute;
+  top: 82px;
+  right: 38px;
+  bottom: 38px;
+  left: 47%;
+  z-index: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 10px 16px;
+  overflow: hidden;
+  color: rgba(91, 72, 52, 0.58);
+  font-family: var(--heading-font);
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.28;
+  letter-spacing: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.town-project-watermark span {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.town-project-watermark span:nth-child(2n) {
+  color: rgba(91, 72, 52, 0.48);
+}
+
+.town-project-watermark span:nth-child(3n) {
+  color: rgba(91, 72, 52, 0.66);
 }
 
 .coffee-list {
@@ -3430,6 +3487,10 @@ main {
 
   .town-note-link {
     font-size: 16px;
+  }
+
+  .town-project-watermark {
+    display: none;
   }
 
   .town-title {

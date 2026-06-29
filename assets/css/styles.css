@@ -2937,9 +2937,30 @@ main {
   padding-inline: 18px;
 }
 
+.admin-post-card {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-post-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-post-card-heading h3 {
+  margin: 0;
+  color: var(--brown);
+  font-family: var(--heading-font);
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
 .admin-post-text {
   width: 100%;
-  min-height: 430px;
+  min-height: 310px;
   padding: 18px 18px 20px;
   color: var(--ink);
   font: 700 16px/1.75 var(--body-font);
@@ -2994,6 +3015,19 @@ main {
 @media (max-width: 620px) {
   .calendar-event-preview {
     display: none !important;
+  }
+
+  .admin-post-card-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-copy-button {
+    width: 100%;
+  }
+
+  .admin-post-text {
+    min-height: 280px;
   }
 
   .subpage-utility-nav {

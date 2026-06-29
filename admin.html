@@ -7,9 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./assets/css/styles.css?v=20260629k">
-    <script src="./assets/js/data.js?v=20260629k" defer></script>
-    <script src="./assets/js/app.js?v=20260629k" defer></script>
+    <link rel="stylesheet" href="./assets/css/styles.css?v=20260630d">
+    <script src="./assets/js/data.js?v=20260630d" defer></script>
+    <script src="./assets/js/app.js?v=20260630d" defer></script>
   </head>
   <body>
     <div class="site-shell page-shell">
@@ -28,18 +28,33 @@
         <section class="page-hero admin-page-hero">
           <span class="hero-icon" aria-hidden="true">🧭</span>
           <h1>Admin</h1>
-          <p>X投稿用の本日の予定を作成</p>
+          <p>X投稿用の予定メモを作成</p>
         </section>
 
         <section class="section admin-post-section">
           <div class="admin-post-heading">
             <div>
-              <span class="admin-label">本日の投稿文</span>
+              <span class="admin-label">投稿メモ</span>
               <h2>Chimney Compass投稿メモ</h2>
             </div>
-            <button class="button admin-copy-button" type="button" data-admin-copy>投稿文をコピー</button>
           </div>
-          <textarea class="admin-post-text" data-admin-post readonly>予定を準備しています…</textarea>
+
+          <article class="admin-post-card">
+            <div class="admin-post-card-heading">
+              <h3>▼翌日投稿（予約用）</h3>
+              <button class="button admin-copy-button" type="button" data-admin-copy="tomorrow">翌日投稿をコピー</button>
+            </div>
+            <textarea class="admin-post-text" data-admin-post="tomorrow" readonly>予定を準備しています…</textarea>
+          </article>
+
+          <article class="admin-post-card">
+            <div class="admin-post-card-heading">
+              <h3>▼当日投稿</h3>
+              <button class="button admin-copy-button" type="button" data-admin-copy="today">当日投稿をコピー</button>
+            </div>
+            <textarea class="admin-post-text" data-admin-post="today" readonly>予定を準備しています…</textarea>
+          </article>
+
           <p class="admin-copy-status" aria-live="polite" data-admin-copy-status></p>
         </section>
       </main>

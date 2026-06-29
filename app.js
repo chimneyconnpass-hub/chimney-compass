@@ -833,6 +833,7 @@
     return String(value || "")
       .replace(/https?:\/\/\S+/g, "")
       .replace(/[\p{Extended_Pictographic}]/gu, "")
+      .replace(/[\uFE0E\uFE0F]/g, "")
       .replace(/[＃#]/g, "")
       .replace(/[&＆]/g, "")
       .replace(/[\s\u3000]+/g, "")
@@ -877,39 +878,38 @@
     return [...dynamicTags, "ChimneyCompass"].map((tag) => `#${tag}`);
   }
 
-  function buildAdminPostText() {
-    const today = todayLocal();
-    const todayIso = isoDateFor(today);
-    const todayTime = today.getTime();
+  function buildAdminSinglePostText(targetDate) {
+    const targetIso = isoDateFor(targetDate);
+    const targetTime = targetDate.getTime();
     const lines = [
       "🧭 Chimney Compass｜本日の予定",
-      formatAdminDate(today),
+      formatAdminDate(targetDate),
       ""
     ];
 
     const regularEvents = data.events
-      .filter((event) => event.source !== "screening" && event.date === todayIso)
+      .filter((event) => event.source !== "screening" && event.date === targetIso)
       .sort((a, b) => eventTimeSortValue(a.time) - eventTimeSortValue(b.time) || a.title.localeCompare(b.title, "ja"));
 
     const movieEvents = data.movieSchedules
       .filter((item) => {
         const startTime = item.startDate?.getTime();
         const endTime = item.endDate?.getTime();
-        return Number.isFinite(startTime) && startTime <= todayTime && (!Number.isFinite(endTime) || endTime >= todayTime);
+        return Number.isFinite(startTime) && startTime <= targetTime && (!Number.isFinite(endTime) || endTime >= targetTime);
       })
       .sort((a, b) => a.theater.localeCompare(b.theater, "ja"));
 
     const screeningEvents = data.screeningEvents
-      .filter((event) => event.date === todayIso)
+      .filter((event) => event.date === targetIso)
       .sort((a, b) => eventTimeSortValue(a.time) - eventTimeSortValue(b.time) || a.displayTitle.localeCompare(b.displayTitle, "ja"));
 
     if (!regularEvents.length && !movieEvents.length && !screeningEvents.length) {
-      lines.push("本日の予定は見つかりませんでした。");
+      lines.push("この日の予定は見つかりませんでした。");
       lines.push("");
       lines.push("▼詳しくはこちら");
       lines.push("https://chimneyconnpass-hub.github.io/chimney-compass/");
       lines.push("");
-      lines.push(...buildAdminHashtags({ regularEvents, movieEvents, screeningEvents, today }));
+      lines.push(...buildAdminHashtags({ regularEvents, movieEvents, screeningEvents, today: targetDate }));
       return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
     }
 
@@ -926,7 +926,7 @@
       lines.push("【映画館上映】");
       movieEvents.forEach((event) => {
         lines.push(event.theater);
-        lines.push(movieStatusForDate(event, today));
+        lines.push(movieStatusForDate(event, targetDate));
         lines.push("");
       });
     }
@@ -943,7 +943,7 @@
     lines.push("▼詳しくはこちら");
     lines.push("https://chimneyconnpass-hub.github.io/chimney-compass/");
     lines.push("");
-    lines.push(...buildAdminHashtags({ regularEvents, movieEvents, screeningEvents, today }));
+    lines.push(...buildAdminHashtags({ regularEvents, movieEvents, screeningEvents, today: targetDate }));
     return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
   }
 
@@ -980,25 +980,31 @@
   }
 
   function renderAdminPost() {
-    const textarea = document.querySelector("[data-admin-post]");
-    const copyButton = document.querySelector("[data-admin-copy]");
+    const tomorrowTextarea = document.querySelector('[data-admin-post="tomorrow"]');
+    const todayTextarea = document.querySelector('[data-admin-post="today"]');
     const status = document.querySelector("[data-admin-copy-status]");
-    if (!textarea || !copyButton) return;
+    const copyButtons = document.querySelectorAll("[data-admin-copy]");
+    if (!tomorrowTextarea || !todayTextarea || !copyButtons.length) return;
 
-    textarea.value = buildAdminPostText();
+    const today = todayLocal();
+    tomorrowTextarea.value = buildAdminSinglePostText(addDays(today, 1));
+    todayTextarea.value = buildAdminSinglePostText(today);
     if (status) status.textContent = "";
 
-    if (!copyButton.dataset.copyBound) {
+    copyButtons.forEach((copyButton) => {
+      if (copyButton.dataset.copyBound) return;
       copyButton.addEventListener("click", async () => {
+        const target = document.querySelector(`[data-admin-post="${copyButton.dataset.adminCopy}"]`);
+        if (!target) return;
         try {
-          await copyText(textarea.value, textarea);
+          await copyText(target.value, target);
           if (status) status.textContent = "コピーしました";
         } catch (_error) {
           if (status) status.textContent = "コピーできませんでした。本文を選択してコピーしてください。";
         }
       });
       copyButton.dataset.copyBound = "true";
-    }
+    });
   }
 
   function homeEventsForGuideDate(date) {

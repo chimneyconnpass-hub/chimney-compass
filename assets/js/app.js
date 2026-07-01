@@ -982,7 +982,8 @@
   function renderAdminPost() {
     const tomorrowTextarea = document.querySelector('[data-admin-post="tomorrow"]');
     const todayTextarea = document.querySelector('[data-admin-post="today"]');
-    const status = document.querySelector("[data-admin-copy-status]");
+    const status = document.querySelector('[data-admin-copy-status="today"]');
+    const inlineStatus = document.querySelector('[data-admin-copy-status="tomorrow"]');
     const copyButtons = document.querySelectorAll("[data-admin-copy]");
     if (!tomorrowTextarea || !todayTextarea || !copyButtons.length) return;
 
@@ -990,17 +991,21 @@
     tomorrowTextarea.value = buildAdminSinglePostText(addDays(today, 1));
     todayTextarea.value = buildAdminSinglePostText(today);
     if (status) status.textContent = "";
+    if (inlineStatus) inlineStatus.textContent = "";
 
     copyButtons.forEach((copyButton) => {
       if (copyButton.dataset.copyBound) return;
       copyButton.addEventListener("click", async () => {
         const target = document.querySelector(`[data-admin-post="${copyButton.dataset.adminCopy}"]`);
         if (!target) return;
+        const activeStatus = copyButton.dataset.adminCopy === "tomorrow" ? inlineStatus : status;
+        if (status) status.textContent = "";
+        if (inlineStatus) inlineStatus.textContent = "";
         try {
           await copyText(target.value, target);
-          if (status) status.textContent = "コピーしました";
+          if (activeStatus) activeStatus.textContent = "コピーしました";
         } catch (_error) {
-          if (status) status.textContent = "コピーできませんでした。本文を選択してコピーしてください。";
+          if (activeStatus) activeStatus.textContent = "コピーできませんでした。本文を選択してコピーしてください。";
         }
       });
       copyButton.dataset.copyBound = "true";

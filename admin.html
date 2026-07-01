@@ -7,9 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./assets/css/styles.css?v=20260630d">
-    <script src="./assets/js/data.js?v=20260630d" defer></script>
-    <script src="./assets/js/app.js?v=20260630d" defer></script>
+    <link rel="stylesheet" href="./assets/css/styles.css?v=20260701b">
+    <script src="./assets/js/data.js?v=20260701b" defer></script>
+    <script src="./assets/js/app.js?v=20260701b" defer></script>
   </head>
   <body>
     <div class="site-shell page-shell">
@@ -42,7 +42,10 @@
           <article class="admin-post-card">
             <div class="admin-post-card-heading">
               <h3>▼翌日投稿（予約用）</h3>
-              <button class="button admin-copy-button" type="button" data-admin-copy="tomorrow">翌日投稿をコピー</button>
+              <div class="admin-copy-control">
+                <button class="button admin-copy-button" type="button" data-admin-copy="tomorrow">翌日投稿をコピー</button>
+                <p class="admin-copy-status admin-copy-status-inline" aria-live="polite" data-admin-copy-status="tomorrow"></p>
+              </div>
             </div>
             <textarea class="admin-post-text" data-admin-post="tomorrow" readonly>予定を準備しています…</textarea>
           </article>
@@ -55,7 +58,7 @@
             <textarea class="admin-post-text" data-admin-post="today" readonly>予定を準備しています…</textarea>
           </article>
 
-          <p class="admin-copy-status" aria-live="polite" data-admin-copy-status></p>
+          <p class="admin-copy-status" aria-live="polite" data-admin-copy-status="today"></p>
         </section>
       </main>
     </div>

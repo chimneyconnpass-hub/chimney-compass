@@ -2937,6 +2937,12 @@ main {
   padding-inline: 18px;
 }
 
+.admin-copy-control {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
 .admin-post-card {
   display: grid;
   gap: 10px;
@@ -2986,6 +2992,11 @@ main {
   font-size: 14px;
   font-weight: 900;
   text-align: right;
+}
+
+.admin-copy-status-inline {
+  min-height: 1.35em;
+  font-size: 13px;
 }
 
 @media (min-width: 780px) {

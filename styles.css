@@ -3028,6 +3028,37 @@ main {
 }
 
 @media (max-width: 620px) {
+  .site-header {
+    display: grid;
+    grid-template-columns: 43px minmax(0, 1fr) 43px;
+    gap: 0;
+    padding-inline: clamp(9px, 3vw, 14px);
+  }
+
+  .brand {
+    display: grid;
+    grid-column: 1 / 3;
+    grid-row: 1;
+    grid-template-columns: 43px minmax(0, 1fr);
+    gap: 0;
+    min-width: 0;
+  }
+
+  .brand-mark {
+    justify-self: center;
+  }
+
+  .brand > span:last-child {
+    min-width: 0;
+    text-align: center;
+  }
+
+  .menu-toggle {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: center;
+  }
+
   .calendar-event-preview {
     display: none !important;
   }

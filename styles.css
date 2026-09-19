@@ -3500,10 +3500,16 @@ main {
 
   .brand-subtitle {
     font-size: 11px;
+    line-height: 1.25;
   }
 
   .brand-subtitle-line {
     display: block;
+  }
+
+  .brand-subtitle-line:last-child {
+    margin-top: 1px;
+    font-size: 10px;
   }
 
   .brand-subtitle-separator {

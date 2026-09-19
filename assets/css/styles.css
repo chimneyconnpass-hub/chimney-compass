@@ -168,6 +168,10 @@ h3 {
   color: var(--muted);
 }
 
+.brand-subtitle-line {
+  white-space: nowrap;
+}
+
 .menu-toggle {
   display: inline-grid;
   place-content: center;
@@ -3496,6 +3500,14 @@ main {
 
   .brand-subtitle {
     font-size: 11px;
+  }
+
+  .brand-subtitle-line {
+    display: block;
+  }
+
+  .brand-subtitle-separator {
+    display: none;
   }
 
   .town-card h3 {

@@ -3028,37 +3028,6 @@ main {
 }
 
 @media (max-width: 620px) {
-  .site-header {
-    display: grid;
-    grid-template-columns: 43px minmax(0, 1fr) 43px;
-    gap: 0;
-    padding-inline: clamp(9px, 3vw, 14px);
-  }
-
-  .brand {
-    display: grid;
-    grid-column: 1 / 3;
-    grid-row: 1;
-    grid-template-columns: 43px minmax(0, 1fr);
-    gap: 0;
-    min-width: 0;
-  }
-
-  .brand-mark {
-    justify-self: center;
-  }
-
-  .brand > span:last-child {
-    min-width: 0;
-    text-align: center;
-  }
-
-  .menu-toggle {
-    grid-column: 3;
-    grid-row: 1;
-    justify-self: center;
-  }
-
   .calendar-event-preview {
     display: none !important;
   }
@@ -3530,17 +3499,27 @@ main {
   }
 
   .brand-subtitle {
-    font-size: 11px;
+    width: max-content;
+    font-size: clamp(9px, 2.56vw, 10px);
     line-height: 1.25;
   }
 
   .brand-subtitle-line {
     display: block;
+    width: 100%;
+  }
+
+  .brand-subtitle-line:first-child {
+    text-align: justify;
+    text-align-last: justify;
+  }
+
+  .brand-subtitle-line:first-child::after {
+    content: "｜";
   }
 
   .brand-subtitle-line:last-child {
     margin-top: 1px;
-    font-size: 10px;
   }
 
   .brand-subtitle-separator {

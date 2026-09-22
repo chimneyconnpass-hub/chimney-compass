@@ -14,24 +14,39 @@
   };
 
   function byDate(a, b) {
-    return a.dateObject - b.dateObject;
+    return scheduleStartTime(a) - scheduleStartTime(b);
+  }
+
+  function scheduleStartTime(item) {
+    const start = item.startDate instanceof Date ? item.startDate : item.dateObject;
+    return start instanceof Date && !Number.isNaN(start.getTime())
+      ? start.getTime()
+      : Number.POSITIVE_INFINITY;
+  }
+
+  function scheduleEndTime(item) {
+    if (item.endDate instanceof Date && !Number.isNaN(item.endDate.getTime())) {
+      return item.endDate.getTime();
+    }
+    return item.startDate instanceof Date
+      ? Number.POSITIVE_INFINITY
+      : scheduleStartTime(item);
   }
 
   function byUpcomingStatus(a, b) {
     const todayTime = todayLocal().getTime();
-    const rank = (event) => {
-      const time = event.dateObject instanceof Date ? event.dateObject.getTime() : Number.POSITIVE_INFINITY;
-      if (time === todayTime) return 0;
-      if (time > todayTime) return 1;
+    const rank = (item) => {
+      const startTime = scheduleStartTime(item);
+      const endTime = scheduleEndTime(item);
+      if (startTime <= todayTime && endTime >= todayTime) return 0;
+      if (startTime > todayTime) return 1;
       return 2;
     };
     return rank(a) - rank(b) || byDate(a, b);
   }
 
   function isPastEvent(event) {
-    return event.dateObject instanceof Date &&
-      !Number.isNaN(event.dateObject.getTime()) &&
-      event.dateObject < todayLocal();
+    return scheduleEndTime(event) < todayLocal().getTime();
   }
 
   function todayLocal() {
@@ -1249,10 +1264,14 @@
       `;
     }).join("");
 
-    const cards = schedules.map((item) => `
-      <article class="movie-schedule-card">
-        <span class="movie-status-label ${isMovieShowingNow(item, today) ? "is-showing" : "is-upcoming"}">
-          ${isMovieShowingNow(item, today) ? "▶️上映中" : "📅上映予定"}
+    const cardSchedules = schedules.slice().sort(byUpcomingStatus);
+    const cards = cardSchedules.map((item) => {
+      const isPast = isPastEvent(item);
+      const isShowing = isMovieShowingNow(item, today);
+      return `
+      <article class="movie-schedule-card ${isPast ? "is-past" : ""}">
+        <span class="movie-status-label ${isPast ? "is-past" : isShowing ? "is-showing" : "is-upcoming"}">
+          ${isPast ? "終了済み" : isShowing ? "▶️上映中" : "📅上映予定"}
         </span>
         <div class="movie-schedule-card-heading">
           <span aria-hidden="true">🎬</span>
@@ -1265,7 +1284,8 @@
         </dl>
         ${item.url ? `<a class="movie-official-link" href="${safeHref(item.url)}"${externalLinkAttrs(item.url)}>公式サイトを見る</a>` : ""}
       </article>
-    `).join("");
+    `;
+    }).join("");
 
     target.innerHTML = `
       <div class="movie-gantt-wrap">

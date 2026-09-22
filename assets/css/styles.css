@@ -3052,7 +3052,19 @@ main {
   }
 
   .pickup-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 10px;
+  }
+
+  .pickup-card {
+    min-width: 0;
+    height: 100%;
+  }
+
+  .pickup-card strong,
+  .pickup-card span:last-child {
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
 
   .town-card-grid {
@@ -3261,9 +3273,9 @@ main {
   }
 
   .project-list {
-    grid-template-columns: 1fr;
-    gap: 18px;
-    padding: 24px 12px 18px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 10px;
+    padding: 20px 10px 16px;
     overflow: hidden;
   }
 
@@ -3283,9 +3295,10 @@ main {
   .project-spot,
   .project-spot.is-featured {
     grid-column: auto;
+    min-width: 0;
     min-height: 0;
     margin-top: 0;
-    padding: 17px 17px 18px;
+    padding: 14px 11px 15px;
     transform: rotate(calc((var(--spot-index) - 2) * 0.25deg));
   }
 
@@ -3295,7 +3308,7 @@ main {
   }
 
   .project-spot.is-featured {
-    padding: 20px 18px;
+    padding: 16px 12px;
   }
 
   .project-spot:hover,
@@ -3304,17 +3317,37 @@ main {
   }
 
   .project-spot h2 {
-    font-size: 23px;
+    max-width: 100%;
+    font-size: 18px;
+    overflow-wrap: anywhere;
   }
 
   .project-spot.is-featured h2 {
-    font-size: 26px;
+    font-size: 20px;
+  }
+
+  .project-spot p {
+    max-width: 100%;
+    font-size: 13px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
   }
 
   .project-icon {
-    width: 44px;
-    height: 44px;
-    font-size: 25px;
+    width: 40px;
+    height: 40px;
+    font-size: 23px;
+  }
+
+  .project-detail-trigger {
+    max-width: 100%;
+    font-size: 12px;
+  }
+
+  .project-tape-link {
+    padding: 6px 8px 7px;
+    font-size: 11px;
+    overflow-wrap: anywhere;
   }
 
   .project-actions {
@@ -3589,6 +3622,20 @@ main {
   .movie-schedule-cards {
     display: grid;
     gap: 12px;
+  }
+
+  .movie-schedule-card.is-past {
+    color: rgba(83, 59, 40, 0.62);
+    opacity: 0.7;
+  }
+
+  .movie-schedule-card.is-past h2 {
+    color: rgba(90, 48, 8, 0.65);
+  }
+
+  .movie-status-label.is-past {
+    color: rgba(83, 59, 40, 0.68);
+    background: rgba(239, 233, 220, 0.72);
   }
 
   .screening-page-hero {
